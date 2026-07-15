@@ -32,6 +32,7 @@
       <nav class="nav-tabs" aria-label="Primary navigation">
         <button class="tab-btn active" data-tab="fixtures">Fixtures</button>
         <button class="tab-btn" data-tab="table">Table</button>
+        <button class="tab-btn" data-tab="news">News</button>
       </nav>
     </div>
   </div>
@@ -56,6 +57,12 @@
     <section class="section" id="tab-table">
       <div class="round-label">League Table <span class="pill">2026/27</span></div>
       <div id="table-wrap"><div class="loading-dots">Loading table</div></div>
+    </section>
+
+    <section class="section" id="tab-news">
+      <div class="round-label">Premier League News <span class="pill" id="news-filter-label">All clubs</span></div>
+      <p class="news-note">Uses the same club selection as the fixture filter. Headlines open on the publisher’s website.</p>
+      <div id="news-grid" class="news-grid"><div class="loading-dots">Loading news</div></div>
     </section>
 
     <section class="section" id="tab-club">

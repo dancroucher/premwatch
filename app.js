@@ -20,6 +20,9 @@ const state = {
   lineups: new Map(),
   squads: new Map(),
   squadRequests: new Map(),
+  news: [],
+  newsKey: '',
+  newsLoading: false,
   source: '',
   filterClubs: false,
   selectedClubs: new Set(),
@@ -612,11 +615,74 @@ function renderDetail(fixture, timeline, stats, lineups) {
   return `<div class="md-head"><span>${escapeHtml(fixture.home.name)} ${score} ${escapeHtml(fixture.away.name)}</span><span>${escapeHtml(statusLabel(fixture))}</span></div>${timelineHtml}${statHtml}${renderLineups(lineups)}`;
 }
 
+function selectedNewsClubs() {
+  if (!state.filterClubs || !state.selectedClubs.size) return [];
+  return [...state.selectedClubs].map(key => state.clubs.get(key)?.name).filter(Boolean).sort();
+}
+
+function newsDate(value) {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return '';
+  return new Intl.DateTimeFormat('en-GB', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }).format(date);
+}
+
+function renderNews() {
+  const grid = $('#news-grid');
+  if (!grid) return;
+  const clubs = selectedNewsClubs();
+  $('#news-filter-label').textContent = clubs.length ? (clubs.length === 1 ? clubs[0] : `${clubs.length} clubs`) : 'All clubs';
+  if (state.newsLoading) {
+    grid.innerHTML = '<div class="loading-dots">Loading news</div>';
+    return;
+  }
+  if (!state.news.length) {
+    grid.innerHTML = '<div class="empty-state"><h2>No matching headlines</h2><p>Try clearing the club filter or check again shortly.</p></div>';
+    return;
+  }
+  grid.innerHTML = state.news.map(article => {
+    const image = article.image || '/news-placeholder.svg';
+    const tags = (article.clubs || []).slice(0, 3).map(club => `<span>${escapeHtml(club)}</span>`).join('');
+    return `<article class="news-card"><a class="news-image" href="${escapeHtml(article.link)}" target="_blank" rel="noopener noreferrer"><img src="${escapeHtml(image)}" data-fallback="/news-placeholder.svg" alt="" loading="lazy"></a><div class="news-body"><div class="news-meta"><span>${escapeHtml(article.source)}</span><time>${escapeHtml(newsDate(article.publishedAt))}</time></div><h2><a href="${escapeHtml(article.link)}" target="_blank" rel="noopener noreferrer">${escapeHtml(article.title)}</a></h2>${article.description ? `<p>${escapeHtml(article.description)}</p>` : ''}${tags ? `<div class="news-tags">${tags}</div>` : ''}</div></article>`;
+  }).join('');
+}
+
+async function loadNews(force = false) {
+  const clubs = selectedNewsClubs();
+  const key = clubs.join('|') || 'all';
+  if (!force && (state.newsKey === key || state.newsLoading)) {
+    renderNews();
+    return;
+  }
+  state.newsKey = key;
+  state.newsLoading = true;
+  renderNews();
+  try {
+    const query = clubs.length ? `?clubs=${encodeURIComponent(clubs.join('|'))}` : '';
+    const data = await fetchJSON(`/api/news${query}`);
+    if (state.newsKey !== key) return;
+    state.news = data.articles || [];
+  } catch (_) {
+    if (state.newsKey === key) state.news = [];
+  } finally {
+    if (state.newsKey === key) {
+      state.newsLoading = false;
+      renderNews();
+    }
+  }
+}
+
+function newsFilterChanged() {
+  state.newsKey = '';
+  if ($('#tab-news')?.classList.contains('visible')) loadNews(true);
+  else renderNews();
+}
+
 function switchTab(tab, clearHash = true) {
   $$('.tab-btn').forEach(button => button.classList.toggle('active', button.dataset.tab === tab));
   $$('.section').forEach(section => section.classList.remove('visible'));
   $(`#tab-${tab}`)?.classList.add('visible');
   if (clearHash && tab !== 'club' && location.hash.startsWith('#club=')) history.replaceState(null, '', location.pathname + location.search);
+  if (tab === 'news') loadNews();
 }
 
 function openClub(name, updateHash = true) {
@@ -657,6 +723,7 @@ function installEvents() {
     state.filterClubs = event.target.checked;
     updateClubPickerButton();
     renderFixtures();
+    newsFilterChanged();
     savePreferences();
   });
   $('#filter-completed').addEventListener('change', event => {
@@ -671,6 +738,7 @@ function installEvents() {
     $('#filter-clubs').checked = false;
     renderClubPicker();
     renderFixtures();
+    newsFilterChanged();
     savePreferences();
   });
   $('#team-picker-grid').addEventListener('change', event => {
@@ -681,6 +749,7 @@ function installEvents() {
     $('#filter-clubs').checked = state.filterClubs;
     updateClubPickerButton();
     renderFixtures();
+    newsFilterChanged();
     savePreferences();
   });
   document.addEventListener('error', event => {
