@@ -11,6 +11,7 @@ const PREF_KEY = 'premier_league_2627_prefs';
 const REVEAL_KEY = 'pl2627_revealed';
 const POLL_MS = 30_000;
 const DETAIL_POLL_MS = 15_000;
+const DEMO_LIVE = new URLSearchParams(location.search).get('demo') === 'live';
 
 const state = {
   fixtures: [],
@@ -154,6 +155,59 @@ async function loadStandings() {
   } catch (_) {
     state.standings = calculateStandings();
   }
+}
+
+function demoTeamSheet(club) {
+  const positions = ['GK', 'D', 'D', 'D', 'D', 'M', 'M', 'M', 'F', 'F', 'F'];
+  return {
+    teamId: club.id,
+    team: club.name,
+    crest: club.crest,
+    formation: '4-3-3',
+    starters: positions.map((position, index) => ({
+      id: `demo-${teamKey(club.name)}-${index + 1}`,
+      name: `${club.name} Player ${index + 1}`,
+      shirtNumber: index + 1,
+      position,
+      captain: index === 5
+    })),
+    substitutes: Array.from({ length: 9 }, (_, index) => ({
+      id: `demo-${teamKey(club.name)}-sub-${index + 1}`,
+      name: `${club.name} Substitute ${index + 1}`,
+      shirtNumber: index + 12,
+      position: index === 0 ? 'GK' : index < 4 ? 'D' : index < 7 ? 'M' : 'F',
+      captain: false
+    }))
+  };
+}
+
+function applyLiveDemo() {
+  const fixture = state.fixtures[0];
+  if (!fixture) return;
+  fixture.kickoff = new Date(Date.now() - 67 * 60000).toISOString();
+  fixture.status = '2H';
+  fixture.statusLong = 'Live demo';
+  fixture.progress = '67';
+  fixture.homeScore = 2;
+  fixture.awayScore = 1;
+  const lineups = { confirmed: true, lineups: [demoTeamSheet(fixture.home), demoTeamSheet(fixture.away)] };
+  state.lineups.set(fixture.id, lineups);
+  fixture.demoDetails = {
+    lineups,
+    timeline: [
+      { strTimeline: 'Goal', strTimelineDetail: 'Goal', intTime: '12', strTeam: fixture.home.name, strPlayer: `${fixture.home.name} Player 9`, strAssist: `${fixture.home.name} Player 7` },
+      { strTimeline: 'Goal', strTimelineDetail: 'Goal', intTime: '34', strTeam: fixture.away.name, strPlayer: `${fixture.away.name} Player 10`, strAssist: '' },
+      { strTimeline: 'Card', strTimelineDetail: 'Yellow card', intTime: '51', strTeam: fixture.away.name, strPlayer: `${fixture.away.name} Player 4`, strAssist: '' },
+      { strTimeline: 'Goal', strTimelineDetail: 'Goal', intTime: '63', strTeam: fixture.home.name, strPlayer: `${fixture.home.name} Player 11`, strAssist: `${fixture.home.name} Player 8` }
+    ],
+    stats: [
+      { strStat: 'Possession', intHome: '58%', intAway: '42%' },
+      { strStat: 'Total shots', intHome: '12', intAway: '7' },
+      { strStat: 'Shots on target', intHome: '6', intAway: '3' },
+      { strStat: 'Corners', intHome: '5', intAway: '2' },
+      { strStat: 'Fouls', intHome: '8', intAway: '11' }
+    ]
+  };
 }
 
 function registerClubs() {
@@ -474,8 +528,12 @@ async function openMatchDetail(row) {
   if (!fixture || (!isLive(fixture) && !hasLineups)) return;
   const panel = document.createElement('div');
   panel.className = 'match-detail';
-  panel.innerHTML = '<div class="md-empty">Loading live match detail…</div>';
   row.insertAdjacentElement('afterend', panel);
+  if (fixture.demoDetails) {
+    panel.innerHTML = renderDetail(fixture, fixture.demoDetails.timeline, fixture.demoDetails.stats, fixture.demoDetails.lineups);
+    return;
+  }
+  panel.innerHTML = '<div class="md-empty">Loading live match detail…</div>';
   await refreshMatchDetail(fixture, row, panel);
 }
 
@@ -634,13 +692,14 @@ async function initialise() {
     const result = await loadOfficialFixtures();
     state.fixtures = result.fixtures.sort((a, b) => fixtureTime(a) - fixtureTime(b));
     state.source = result.source;
+    if (DEMO_LIVE) applyLiveDemo();
     await loadStandings();
     registerClubs();
     renderClubPicker();
     renderFixtures();
     renderTable();
     updateSummary();
-    setFeedStatus('ok', `${state.source} fixture data loaded`);
+    setFeedStatus(DEMO_LIVE ? 'live' : 'ok', DEMO_LIVE ? '● Demo match live — simulated data' : `${state.source} fixture data loaded`);
   } catch (_) {
     state.fixtures = [];
     state.standings = [];
@@ -652,7 +711,7 @@ async function initialise() {
 
   openHashClub();
   setInterval(updateNextMatch, 30_000);
-  refreshLiveScores();
+  if (!DEMO_LIVE) refreshLiveScores();
 }
 
 initialise();
