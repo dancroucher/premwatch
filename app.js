@@ -1,9 +1,6 @@
 const COMPETITION = {
   name: 'Premier League',
   season: '2026/27',
-  apiFootballLeagueId: 39,
-  sportsDbLeagueId: 4328,
-  sportsDbSeason: '2026-2027',
   expectedFixtures: 380
 };
 
@@ -73,11 +70,16 @@ function dateParts(iso) {
 }
 
 function teamKey(value) {
-  return String(value || '').normalize('NFKD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z0-9]/g, '');
+  return String(value || '')
+    .normalize('NFKD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]/g, '')
+    .replace(/^afcbournemouth$/, 'bournemouth');
 }
 
 function pairKey(home, away) {
-  return [teamKey(home), teamKey(away)].sort().join('|');
+  return `${teamKey(home)}|${teamKey(away)}`;
 }
 
 function roundNumber(round) {
@@ -106,7 +108,7 @@ function normaliseFixture(event, source) {
   const round = event.strRound || event.intRound || '';
   return {
     id: String(event.idEvent || `${pairKey(event.strHomeTeam, event.strAwayTeam)}:${timestamp}`),
-    apiFootballFixtureId: event.apiFootballFixtureId || null,
+    providerFixtureId: event.providerFixtureId || null,
     source: event.strSource || source,
     kickoff: timestamp,
     round,
@@ -131,10 +133,6 @@ async function fetchJSON(url) {
   return data;
 }
 
-function feedURL(path) {
-  return `/api/feed?path=${encodeURIComponent(path)}`;
-}
-
 function isCompleteFixtureList(fixtures) {
   if (fixtures.length !== COMPETITION.expectedFixtures) return false;
   const ids = new Set(fixtures.map(fixture => fixture.id));
@@ -142,15 +140,9 @@ function isCompleteFixtureList(fixtures) {
 }
 
 async function loadOfficialFixtures() {
-  try {
-    const data = await fetchJSON('/api/live?type=fixtures');
-    const fixtures = (data.events || []).map(event => normaliseFixture(event, 'api-football'));
-    if (isCompleteFixtureList(fixtures)) return { fixtures, source: 'API-Football' };
-  } catch (_) { /* use the independent fallback */ }
-
-  const data = await fetchJSON(feedURL(`eventsseason.php?id=${COMPETITION.sportsDbLeagueId}&s=${COMPETITION.sportsDbSeason}`));
-  const fixtures = (data.events || []).map(event => normaliseFixture(event, 'thesportsdb'));
-  if (isCompleteFixtureList(fixtures)) return { fixtures, source: 'TheSportsDB' };
+  const data = await fetchJSON('/api/live?type=fixtures');
+  const fixtures = (data.events || []).map(event => normaliseFixture(event, data.provider || 'football-feed'));
+  if (isCompleteFixtureList(fixtures)) return { fixtures, source: data.provider || 'Premier League feed' };
   throw new Error(`Fixture provider returned ${fixtures.length} of ${COMPETITION.expectedFixtures} fixtures`);
 }
 
@@ -404,19 +396,8 @@ function mergeEvents(events, source) {
 }
 
 async function loadLiveEvents() {
-  try {
-    const data = await fetchJSON('/api/live?type=feed');
-    return { events: data.events || [], source: 'api-football' };
-  } catch (_) {
-    const dates = [-1, 0, 1].map(offset => {
-      const date = new Date(Date.now() + offset * 86400000);
-      return date.toISOString().slice(0, 10);
-    });
-    const responses = await Promise.allSettled(dates.map(date => fetchJSON(feedURL(`eventsday.php?d=${date}&l=${COMPETITION.sportsDbLeagueId}`))));
-    const events = responses.flatMap(result => result.status === 'fulfilled' ? (result.value.events || []) : []);
-    if (!events.length && responses.every(result => result.status === 'rejected')) throw new Error('All live feeds unavailable');
-    return { events, source: 'thesportsdb' };
-  }
+  const data = await fetchJSON('/api/live?type=feed');
+  return { events: data.events || [], source: data.provider || 'football-feed' };
 }
 
 async function refreshLiveScores() {
@@ -463,16 +444,8 @@ async function openMatchDetail(row) {
 async function refreshMatchDetail(fixture, row, panel) {
   try {
     let data;
-    if (fixture.apiFootballFixtureId) {
-      data = await fetchJSON(`/api/live?type=detail&id=${encodeURIComponent(fixture.apiFootballFixtureId)}`);
-    } else {
-      const [event, timeline, stats] = await Promise.all([
-        fetchJSON(feedURL(`lookupevent.php?id=${encodeURIComponent(fixture.id)}`)),
-        fetchJSON(feedURL(`lookuptimeline.php?id=${encodeURIComponent(fixture.id)}`)),
-        fetchJSON(feedURL(`lookupeventstats.php?id=${encodeURIComponent(fixture.id)}`))
-      ]);
-      data = { events: event.events || [], timeline: timeline.timeline || [], eventstats: stats.eventstats || [] };
-    }
+    if (!fixture.providerFixtureId) throw new Error('No detail provider available');
+    data = await fetchJSON(`/api/live?type=detail&id=${encodeURIComponent(fixture.providerFixtureId)}`);
     if (data.events && data.events.length) mergeEvents(data.events, fixture.source);
     panel.innerHTML = renderDetail(fixture, data.timeline || [], data.eventstats || []);
   } catch (_) {
