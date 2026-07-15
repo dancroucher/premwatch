@@ -315,7 +315,7 @@ function espnLineups(data) {
       teamId: roster.team && roster.team.id,
       team: roster.team && roster.team.displayName || '',
       crest: roster.team && (roster.team.logo || roster.team.logos && roster.team.logos[0] && roster.team.logos[0].href) || '',
-      formation: roster.formation || '',
+      formation: typeof roster.formation === 'string' ? roster.formation : roster.formation && roster.formation.label || '',
       starters: players.filter(value => value.starter).map(player),
       substitutes: players.filter(value => !value.starter).map(player)
     };
@@ -384,6 +384,35 @@ async function detail(rawId) {
   };
 }
 
+function playerPhoto(player) {
+  const opta = player && player.altIds && player.altIds.opta;
+  return opta ? `https://resources.premierleague.com/premierleague/photos/players/110x140/${opta}.png` : '';
+}
+
+async function squad(teamId) {
+  if (!teamId) return { players: [] };
+  const query = `comp=${COMPETITION_ID}&compSeasons=${SEASON_ID}&teams=${encodeURIComponent(teamId)}&page=0&pageSize=100&altIds=true`;
+  const data = await pulse(`/players?${query}`);
+  const seen = new Set();
+  const players = (data.content || []).filter(player => {
+    if (!player.id || seen.has(player.id)) return false;
+    seen.add(player.id);
+    return true;
+  }).map(player => ({
+    id: player.id,
+    name: player.name && player.name.display || '',
+    shirtNumber: player.info && player.info.shirtNum,
+    position: player.info && player.info.position || '',
+    positionInfo: player.info && player.info.positionInfo || '',
+    nationality: player.nationalTeam && player.nationalTeam.country || '',
+    age: player.age || '',
+    onLoan: !!(player.info && player.info.loan),
+    currentTeam: player.currentTeam && player.currentTeam.name || '',
+    photo: playerPhoto(player)
+  }));
+  return { provider: 'Premier League', players };
+}
+
 async function lineup(rawId) {
   const value = String(rawId || '');
   if (!value) return { confirmed: false, lineups: [] };
@@ -413,6 +442,7 @@ export default async function handler(req, res) {
     else if (type === 'standings') body = await standings();
     else if (type === 'detail') body = await detail(req.query.id);
     else if (type === 'lineups') body = await lineups(req.query.ids);
+    else if (type === 'squad') body = await squad(req.query.teamId);
     else body = await feed();
 
     const cache = type === 'fixtures'
@@ -423,7 +453,9 @@ export default async function handler(req, res) {
           ? 's-maxage=10, stale-while-revalidate=10'
           : type === 'lineups'
             ? 's-maxage=20, stale-while-revalidate=20'
-            : 's-maxage=15, stale-while-revalidate=15';
+            : type === 'squad'
+              ? 's-maxage=21600, stale-while-revalidate=86400'
+              : 's-maxage=15, stale-while-revalidate=15';
     res.setHeader('Cache-Control', cache);
     res.status(200).json(body);
   } catch (error) {

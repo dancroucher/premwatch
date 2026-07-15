@@ -150,6 +150,17 @@ main { margin: 0 auto; max-width: 1300px; padding: 24px 14px 60px; }
 .club-fixture.live { border-left-color: var(--live); }
 .cf-meta { color: var(--muted); display: flex; font-size: 11px; justify-content: space-between; margin-bottom: 3px; }
 .cf-teams { font-weight: 700; }
+.club-squad { border-top: 1px solid var(--border); margin-top: 20px; padding-top: 16px; }
+.squad-groups { display: flex; flex-direction: column; gap: 18px; }
+.squad-group h4 { color: var(--ink); font-size: 14px; margin-bottom: 8px; }
+.squad-grid { display: grid; gap: 8px; grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.squad-player { align-items: stretch; background: var(--faint); border: 1px solid var(--border); border-radius: 5px; display: flex; min-height: 104px; overflow: hidden; }
+.squad-player > img, .squad-photo { align-self: flex-end; flex: 0 0 78px; height: 100px; object-fit: contain; object-position: bottom center; width: 78px; }
+.squad-player-info { display: flex; flex: 1; flex-direction: column; justify-content: center; min-width: 0; padding: 8px 8px 8px 2px; }
+.squad-player-info strong { font-size: 12px; line-height: 1.25; }
+.squad-player-info > span { color: var(--muted); font-size: 10px; margin-top: 2px; }
+.squad-shirt { color: var(--muted); display: inline-block; font-size: 10px; margin-right: 5px; min-width: 16px; }
+.squad-player-info .loan-status { color: var(--live); font-weight: 600; }
 
 footer { border-top: 1px solid var(--border); color: var(--muted); font-size: 13px; padding: 24px; text-align: center; }
 footer a { color: var(--ink); }
@@ -174,6 +185,7 @@ footer a { color: var(--ink); }
   .row-venue { grid-area: venue; text-align: left; }
   .club-name { font-size: 14px; }
   .club-sections, .lineups-grid { grid-template-columns: 1fr; }
+  .squad-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .quick-jump { bottom: 10px; display: flex; gap: 8px; left: 10px; position: fixed; right: 10px; z-index: 200; }
   .quick-jump button { background: var(--ink); border: 1px solid var(--border); border-radius: 999px; box-shadow: 0 8px 22px rgba(0,0,0,.18); color: #fff; flex: 1; font-size: 13px; padding: 10px; }
 }
@@ -184,4 +196,5 @@ footer a { color: var(--ink); }
   .row-teams { gap: 5px; }
   .vs.score { font-size: 16px; }
   .league-table .optional { display: none; }
+  .squad-grid { grid-template-columns: 1fr; }
 }

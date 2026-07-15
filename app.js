@@ -18,6 +18,8 @@ const state = {
   standings: [],
   clubs: new Map(),
   lineups: new Map(),
+  squads: new Map(),
+  squadRequests: new Map(),
   source: '',
   filterClubs: false,
   selectedClubs: new Set(),
@@ -374,6 +376,40 @@ function fixtureMini(fixture) {
   return `<div class="club-fixture${isFinal(fixture) ? ' finished' : ''}${isLive(fixture) ? ' live' : ''}"><div class="cf-meta"><span>${escapeHtml(fixture.venue || '')}</span><span>${escapeHtml(isLive(fixture) || isFinal(fixture) ? statusLabel(fixture) : `${parts.date} · ${parts.time} ${parts.zone}`)}</span></div><div class="cf-teams">${escapeHtml(fixture.home.name)} <span class="vs${hasScore(fixture) ? ' score' : ''}">${score}</span> ${escapeHtml(fixture.away.name)}</div></div>`;
 }
 
+const POSITION_GROUPS = [
+  ['G', 'Goalkeepers'],
+  ['D', 'Defenders'],
+  ['M', 'Midfielders'],
+  ['F', 'Forwards']
+];
+
+function renderSquad(squad, club) {
+  if (!squad) return '<div class="loading-dots">Loading squad</div>';
+  if (!squad.players || !squad.players.length) return '<p class="md-empty">Squad data is currently unavailable.</p>';
+  return `<div class="squad-groups">${POSITION_GROUPS.map(([code, label]) => {
+    const players = squad.players.filter(player => player.position === code).sort((a, b) => (Number(a.shirtNumber) || 999) - (Number(b.shirtNumber) || 999) || a.name.localeCompare(b.name));
+    if (!players.length) return '';
+    return `<section class="squad-group"><h4>${label}</h4><div class="squad-grid">${players.map(player => {
+      const elsewhere = player.currentTeam && teamKey(player.currentTeam) !== teamKey(club.name);
+      const status = player.onLoan || elsewhere ? `On loan${player.currentTeam ? ` · ${player.currentTeam}` : ''}` : '';
+      return `<article class="squad-player">${player.photo ? `<img src="${escapeHtml(player.photo)}" alt="" loading="lazy">` : '<span class="squad-photo"></span>'}<div class="squad-player-info"><strong><span class="squad-shirt">${escapeHtml(player.shirtNumber || '–')}</span>${escapeHtml(player.name)}</strong><span>${escapeHtml(player.positionInfo || label.slice(0, -1))}</span>${player.nationality ? `<span>${escapeHtml(player.nationality)}</span>` : ''}${status ? `<span class="loan-status">${escapeHtml(status)}</span>` : ''}</div></article>`;
+    }).join('')}</div></section>`;
+  }).join('')}</div>`;
+}
+
+async function loadClubSquad(key, club) {
+  if (!club.id || state.squads.has(key) || state.squadRequests.has(key)) return;
+  const request = fetchJSON(`/api/live?type=squad&teamId=${encodeURIComponent(club.id)}`)
+    .then(data => state.squads.set(key, { players: data.players || [], provider: data.provider || '' }))
+    .catch(() => state.squads.set(key, { players: [] }))
+    .finally(() => {
+      state.squadRequests.delete(key);
+      const hash = location.hash.match(/^#club=(.+)$/);
+      if (hash && teamKey(decodeURIComponent(hash[1])) === key) renderClubPage(club.name);
+    });
+  state.squadRequests.set(key, request);
+}
+
 function renderClubPage(name) {
   const key = teamKey(name);
   const club = state.clubs.get(key);
@@ -388,7 +424,9 @@ function renderClubPage(name) {
   const completed = matches.filter(isFinal).sort((a, b) => fixtureTime(b) - fixtureTime(a)).slice(0, 8);
   const upcoming = matches.filter(fixture => !isFinal(fixture) && !isPostponed(fixture)).sort((a, b) => fixtureTime(a) - fixtureTime(b)).slice(0, 8);
   const tableRow = (state.standings.length ? state.standings : calculateStandings()).find(row => teamKey(row.team) === key);
-  target.innerHTML = `<div class="club-card"><div class="club-head">${crestHtml(club, true)}<div><div class="club-title">${escapeHtml(club.name)}</div><div class="club-meta">${tableRow ? `${tableRow.rank}${ordinal(tableRow.rank)} · ${tableRow.points} points · ${tableRow.played} played` : `${matches.length} fixtures`}</div></div></div><div class="club-sections"><div><div class="club-section-title">Upcoming fixtures</div>${upcoming.length ? upcoming.map(fixtureMini).join('') : '<p class="md-empty">No upcoming fixtures available.</p>'}</div><div><div class="club-section-title">Recent results</div>${completed.length ? completed.map(fixtureMini).join('') : '<p class="md-empty">No results yet.</p>'}</div></div></div>`;
+  const squad = state.squads.get(key);
+  target.innerHTML = `<div class="club-card"><div class="club-head">${crestHtml(club, true)}<div><div class="club-title">${escapeHtml(club.name)}</div><div class="club-meta">${tableRow ? `${tableRow.rank}${ordinal(tableRow.rank)} · ${tableRow.points} points · ${tableRow.played} played` : `${matches.length} fixtures`}</div></div></div><div class="club-sections"><div><div class="club-section-title">Upcoming fixtures</div>${upcoming.length ? upcoming.map(fixtureMini).join('') : '<p class="md-empty">No upcoming fixtures available.</p>'}</div><div><div class="club-section-title">Recent results</div>${completed.length ? completed.map(fixtureMini).join('') : '<p class="md-empty">No results yet.</p>'}</div></div><div class="club-squad"><div class="club-section-title">2026/27 squad</div>${renderSquad(squad, club)}</div></div>`;
+  loadClubSquad(key, club);
 }
 
 function ordinal(number) {
@@ -564,15 +602,15 @@ function renderLineups(data) {
 
 function renderDetail(fixture, timeline, stats, lineups) {
   const score = hasScore(fixture) ? `${fixture.homeScore} – ${fixture.awayScore}` : 'v';
-  const timelineHtml = timeline.length ? `<div class="md-list">${timeline.map(event => {
+  const timelineHtml = timeline.length ? `<div class="md-section"><div class="md-section-title">Match events</div><div class="md-list">${timeline.map(event => {
     const away = event.strTeam && teamKey(event.strTeam) === teamKey(fixture.away.name);
     const kind = String(event.strTimeline || '').toLowerCase();
     const detail = String(event.strTimelineDetail || '').toLowerCase();
     const icon = kind.includes('goal') || detail.includes('goal') ? '⚽' : kind.includes('card') || detail.includes('card') ? (detail.includes('red') ? '🟥' : '🟨') : kind.includes('subst') ? '🔁' : '•';
     return `<div class="md-item${away ? ' away' : ''}"><span class="md-min">${escapeHtml(event.intTime ? `${event.intTime}'` : '')}</span><span>${icon}</span><span class="md-who">${escapeHtml(event.strPlayer || event.strTimeline || '')}${event.strAssist ? ` <span class="md-sub">(${escapeHtml(event.strAssist)})</span>` : ''}</span></div>`;
-  }).join('')}</div>` : '<div class="md-empty">No match events reported yet.</div>';
+  }).join('')}</div></div>` : '<div class="md-section"><div class="md-section-title">Match events</div><div class="md-empty">No match events reported yet.</div></div>';
   const statHtml = stats.length ? `<div class="md-section"><div class="md-section-title">Match statistics</div>${stats.slice(0, 10).map(stat => `<div class="md-stat"><span class="md-stat-value">${escapeHtml(stat.intHome)}</span><span class="md-stat-label">${escapeHtml(stat.strStat)}</span><span class="md-stat-value">${escapeHtml(stat.intAway)}</span></div>`).join('')}</div>` : '';
-  return `<div class="md-head"><span>${escapeHtml(fixture.home.name)} ${score} ${escapeHtml(fixture.away.name)}</span><span>${escapeHtml(statusLabel(fixture))}</span></div>${renderLineups(lineups)}${timelineHtml}${statHtml}`;
+  return `<div class="md-head"><span>${escapeHtml(fixture.home.name)} ${score} ${escapeHtml(fixture.away.name)}</span><span>${escapeHtml(statusLabel(fixture))}</span></div>${timelineHtml}${statHtml}${renderLineups(lineups)}`;
 }
 
 function switchTab(tab, clearHash = true) {
