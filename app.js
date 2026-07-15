@@ -256,7 +256,7 @@ function statusLabel(fixture) {
 }
 
 function crestHtml(club, large = false) {
-  if (club.crest) return `<img class="club-crest${large ? ' large' : ''}" src="${escapeHtml(club.crest)}" alt="" loading="lazy">`;
+  if (club.crest) return `<img class="club-crest${large ? ' large' : ''}" src="${escapeHtml(club.crest)}" data-fallback="/icon.svg" alt="" loading="lazy">`;
   return `<span class="club-crest${large ? ' large' : ''}" aria-hidden="true"></span>`;
 }
 
@@ -366,7 +366,7 @@ function renderTable() {
   }
   wrap.innerHTML = `<div class="league-table-wrap"><table class="league-table">
     <thead><tr><th>Pos</th><th class="club-col">Club</th><th>P</th><th>W</th><th>D</th><th>L</th><th class="optional">GF</th><th class="optional">GA</th><th>GD</th><th>Pts</th><th class="optional">Form</th></tr></thead>
-    <tbody>${rows.map((row, index) => `<tr><td>${row.rank || index + 1}</td><td class="club-col"><a class="table-club" href="${clubUrl(row.team)}" data-club="${escapeHtml(row.team)}">${row.crest ? `<img src="${escapeHtml(row.crest)}" alt="">` : ''}<span>${escapeHtml(row.team)}</span></a></td><td>${row.played}</td><td>${row.won}</td><td>${row.drawn}</td><td>${row.lost}</td><td class="optional">${row.goalsFor}</td><td class="optional">${row.goalsAgainst}</td><td>${row.goalDifference > 0 ? '+' : ''}${row.goalDifference}</td><td><strong>${row.points}</strong></td><td class="form optional">${escapeHtml(row.form || '')}</td></tr>`).join('')}</tbody>
+    <tbody>${rows.map((row, index) => `<tr><td>${row.rank || index + 1}</td><td class="club-col"><a class="table-club" href="${clubUrl(row.team)}" data-club="${escapeHtml(row.team)}">${row.crest ? `<img src="${escapeHtml(row.crest)}" data-fallback="/icon.svg" alt="">` : ''}<span>${escapeHtml(row.team)}</span></a></td><td>${row.played}</td><td>${row.won}</td><td>${row.drawn}</td><td>${row.lost}</td><td class="optional">${row.goalsFor}</td><td class="optional">${row.goalsAgainst}</td><td>${row.goalDifference > 0 ? '+' : ''}${row.goalDifference}</td><td><strong>${row.points}</strong></td><td class="form optional">${escapeHtml(row.form || '')}</td></tr>`).join('')}</tbody>
   </table></div>`;
 }
 
@@ -390,9 +390,8 @@ function renderSquad(squad, club) {
     const players = squad.players.filter(player => player.position === code).sort((a, b) => (Number(a.shirtNumber) || 999) - (Number(b.shirtNumber) || 999) || a.name.localeCompare(b.name));
     if (!players.length) return '';
     return `<section class="squad-group"><h4>${label}</h4><div class="squad-grid">${players.map(player => {
-      const elsewhere = player.currentTeam && teamKey(player.currentTeam) !== teamKey(club.name);
-      const status = player.onLoan || elsewhere ? `On loan${player.currentTeam ? ` · ${player.currentTeam}` : ''}` : '';
-      return `<article class="squad-player">${player.photo ? `<img src="${escapeHtml(player.photo)}" alt="" loading="lazy">` : '<span class="squad-photo"></span>'}<div class="squad-player-info"><strong><span class="squad-shirt">${escapeHtml(player.shirtNumber || '–')}</span>${escapeHtml(player.name)}</strong><span>${escapeHtml(player.positionInfo || label.slice(0, -1))}</span>${player.nationality ? `<span>${escapeHtml(player.nationality)}</span>` : ''}${status ? `<span class="loan-status">${escapeHtml(status)}</span>` : ''}</div></article>`;
+      const photo = player.photo || '/player-placeholder.svg';
+      return `<article class="squad-player"><img class="player-photo" src="${escapeHtml(photo)}" data-fallback="/player-placeholder.svg" alt="" loading="lazy"><div class="squad-player-info"><strong><span class="squad-shirt">${escapeHtml(player.shirtNumber || '–')}</span>${escapeHtml(player.name)}</strong><span>${escapeHtml(player.positionInfo || label.slice(0, -1))}</span>${player.nationality ? `<span>${escapeHtml(player.nationality)}</span>` : ''}</div></article>`;
     }).join('')}</div></section>`;
   }).join('')}</div>`;
 }
@@ -596,7 +595,7 @@ function renderLineups(data) {
   if (!data || !data.confirmed) return '<div class="md-section"><div class="md-section-title">Line-ups</div><div class="md-empty">Teams have not been announced.</div></div>';
   return `<div class="md-section"><div class="md-section-title">Confirmed line-ups</div><div class="lineups-grid">${data.lineups.map(team => {
     const playerRow = player => `<li><span class="squad-number">${escapeHtml(player.shirtNumber || '–')}</span><span>${escapeHtml(player.name)}${player.captain ? ' <strong class="captain">C</strong>' : ''}</span><span class="player-position">${escapeHtml(player.position)}</span></li>`;
-    return `<div class="lineup-team"><div class="lineup-head">${team.crest ? `<img src="${escapeHtml(team.crest)}" alt="">` : ''}<div><strong>${escapeHtml(team.team)}</strong>${team.formation ? `<span>${escapeHtml(team.formation)}</span>` : ''}</div></div><ol class="player-list">${team.starters.map(playerRow).join('')}</ol><div class="subs-title">Substitutes</div><ul class="player-list substitutes">${team.substitutes.map(playerRow).join('')}</ul></div>`;
+    return `<div class="lineup-team"><div class="lineup-head">${team.crest ? `<img src="${escapeHtml(team.crest)}" data-fallback="/icon.svg" alt="">` : ''}<div><strong>${escapeHtml(team.team)}</strong>${team.formation ? `<span>${escapeHtml(team.formation)}</span>` : ''}</div></div><ol class="player-list">${team.starters.map(playerRow).join('')}</ol><div class="subs-title">Substitutes</div><ul class="player-list substitutes">${team.substitutes.map(playerRow).join('')}</ul></div>`;
   }).join('')}</div></div>`;
 }
 
@@ -684,6 +683,12 @@ function installEvents() {
     renderFixtures();
     savePreferences();
   });
+  document.addEventListener('error', event => {
+    const image = event.target.closest && event.target.closest('img[data-fallback]');
+    if (!image || image.dataset.fallbackApplied) return;
+    image.dataset.fallbackApplied = 'true';
+    image.src = image.dataset.fallback;
+  }, true);
   document.addEventListener('click', event => {
     if (!$('#team-picker').contains(event.target)) $('#team-picker').classList.remove('open');
     const club = event.target.closest('[data-club]');

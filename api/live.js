@@ -392,10 +392,19 @@ function playerPhoto(player) {
 async function squad(teamId) {
   if (!teamId) return { players: [] };
   const query = `comp=${COMPETITION_ID}&compSeasons=${SEASON_ID}&teams=${encodeURIComponent(teamId)}&page=0&pageSize=100&altIds=true`;
-  const data = await pulse(`/players?${query}`);
+  const [data, requestedTeam] = await Promise.all([
+    pulse(`/players?${query}`),
+    pulse(`/teams/${encodeURIComponent(teamId)}`)
+  ]);
+  const requestedName = String(requestedTeam.name || '').toLowerCase();
   const seen = new Set();
   const players = (data.content || []).filter(player => {
     if (!player.id || seen.has(player.id)) return false;
+    const current = player.currentTeam;
+    const belongsToClub = !current
+      || String(current.id) === String(teamId)
+      || (requestedName && String(current.name || '').toLowerCase().startsWith(`${requestedName} `));
+    if (!belongsToClub) return false;
     seen.add(player.id);
     return true;
   }).map(player => ({
@@ -406,8 +415,6 @@ async function squad(teamId) {
     positionInfo: player.info && player.info.positionInfo || '',
     nationality: player.nationalTeam && player.nationalTeam.country || '',
     age: player.age || '',
-    onLoan: !!(player.info && player.info.loan),
-    currentTeam: player.currentTeam && player.currentTeam.name || '',
     photo: playerPhoto(player)
   }));
   return { provider: 'Premier League', players };
