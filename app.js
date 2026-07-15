@@ -20,7 +20,6 @@ const state = {
   standings: [],
   clubs: new Map(),
   source: '',
-  timezone: 'Europe/London',
   filterClubs: false,
   selectedClubs: new Set(),
   hideCompleted: false,
@@ -38,7 +37,6 @@ const escapeHtml = value => String(value == null ? '' : value).replace(/[&<>"']/
 function loadPreferences() {
   try {
     const prefs = JSON.parse(localStorage.getItem(PREF_KEY) || '{}');
-    state.timezone = prefs.timezone || state.timezone;
     state.filterClubs = !!prefs.filterClubs;
     state.hideCompleted = !!prefs.hideCompleted;
     state.selectedClubs = new Set(Array.isArray(prefs.selectedClubs) ? prefs.selectedClubs : []);
@@ -49,7 +47,6 @@ function loadPreferences() {
 function savePreferences() {
   try {
     localStorage.setItem(PREF_KEY, JSON.stringify({
-      timezone: state.timezone,
       filterClubs: state.filterClubs,
       hideCompleted: state.hideCompleted,
       selectedClubs: [...state.selectedClubs],
@@ -59,12 +56,7 @@ function savePreferences() {
 }
 
 function effectiveTimeZone() {
-  return state.timezone === 'local' ? Intl.DateTimeFormat().resolvedOptions().timeZone : state.timezone;
-}
-
-function timeZoneLabel() {
-  if (state.timezone === 'local') return 'Local';
-  return ({ 'Europe/London': 'London', 'Australia/Melbourne': 'Melbourne', 'Europe/Helsinki': 'Helsinki' })[state.timezone] || state.timezone;
+  return 'Europe/London';
 }
 
 function dateParts(iso) {
@@ -545,14 +537,6 @@ function updateClubPickerButton() {
 
 function installEvents() {
   $$('.tab-btn').forEach(button => button.addEventListener('click', () => switchTab(button.dataset.tab)));
-  $$('.tz-btn').forEach(button => button.addEventListener('click', () => {
-    state.timezone = button.dataset.tz;
-    updateTimezoneControls();
-    renderFixtures();
-    renderTable();
-    rerenderOpenClub();
-    savePreferences();
-  }));
 
   $('#filter-clubs').addEventListener('change', event => {
     state.filterClubs = event.target.checked;
@@ -615,17 +599,11 @@ function installEvents() {
   $('#jump-filters').addEventListener('click', () => $('#tab-fixtures .round-label').scrollIntoView({ behavior: 'smooth', block: 'start' }));
 }
 
-function updateTimezoneControls() {
-  $$('.tz-btn').forEach(button => button.classList.toggle('active', button.dataset.tz === state.timezone));
-  $('#tz-note').textContent = `Times shown in ${timeZoneLabel()}`;
-}
-
 async function initialise() {
   loadPreferences();
   installEvents();
   $('#filter-clubs').checked = state.filterClubs;
   $('#filter-completed').checked = state.hideCompleted;
-  updateTimezoneControls();
 
   try {
     const result = await loadOfficialFixtures();

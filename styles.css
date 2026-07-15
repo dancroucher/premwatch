@@ -33,15 +33,12 @@ button, input { font: inherit; }
 .feed-status.off { border-color: #645a30; color: #d8c27b; }
 
 .nav-wrap { background: var(--surface); border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 100; }
-.nav-inner { align-items: center; display: flex; justify-content: space-between; margin: 0 auto; max-width: 1300px; }
-.nav-tabs, .tz-control { display: flex; gap: 3px; overflow-x: auto; padding: 8px 14px; scrollbar-width: none; }
-.nav-tabs::-webkit-scrollbar, .tz-control::-webkit-scrollbar { display: none; }
-.tab-btn, .tz-btn { background: transparent; border: 1px solid transparent; border-radius: 3px; color: var(--muted); cursor: pointer; flex-shrink: 0; padding: 7px 15px; white-space: nowrap; }
-.tab-btn:hover, .tz-btn:hover { background: var(--faint); color: var(--ink); }
-.tab-btn.active, .tz-btn.active { background: var(--ink); border-color: var(--ink); color: #fff; }
-.tz-control { align-items: center; }
-.tz-control-label { color: var(--muted); flex-shrink: 0; font-size: 12px; margin-right: 4px; }
-.tz-btn { border-color: var(--border); font-size: 13px; padding: 5px 11px; }
+.nav-inner { margin: 0 auto; max-width: 1300px; }
+.nav-tabs { display: flex; gap: 3px; overflow-x: auto; padding: 8px 14px; scrollbar-width: none; }
+.nav-tabs::-webkit-scrollbar { display: none; }
+.tab-btn { background: transparent; border: 1px solid transparent; border-radius: 3px; color: var(--muted); cursor: pointer; flex-shrink: 0; padding: 7px 15px; white-space: nowrap; }
+.tab-btn:hover { background: var(--faint); color: var(--ink); }
+.tab-btn.active { background: var(--ink); border-color: var(--ink); color: #fff; }
 
 main { margin: 0 auto; max-width: 1300px; padding: 24px 14px 60px; }
 .section { display: none; }
@@ -146,8 +143,7 @@ footer a { color: var(--ink); }
   .site-header { padding: 14px; }
   .site-header h1 { font-size: 22px; }
   .next-match { display: flex; width: 100%; }
-  .nav-inner { display: block; }
-  .nav-tabs, .tz-control { padding: 7px 10px; }
+  .nav-tabs { padding: 7px 10px; }
   main { padding: 14px 10px 90px; }
   .round-label { gap: 8px; }
   .filter-toggle { background: var(--surface); border: 1px solid var(--border); border-radius: 999px; font-size: 12px; padding: 6px 9px; }
