@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 180 180" role="img" aria-label="Football fixtures icon">
+  <rect width="180" height="180" rx="40" fill="#1c1f23"/>
+  <path d="M0 129c36-18 68-18 102 0s55 17 78 3v48H0z" fill="#047d68"/>
+  <path d="M0 120c36-18 68-18 102 0s55 17 78 3" fill="none" stroke="#4ed4b6" stroke-width="5"/>
+  <circle cx="90" cy="77" r="43" fill="#fff"/>
+  <path d="M90 45l18 13-7 22H79l-7-22zm-35 27 17-14 7 22-14 17-18-7zm70 0-17-14-7 22 14 17 18-7zm-55 39 9-31h22l9 31-20 12z" fill="#1c1f23"/>
+  <text x="90" y="157" text-anchor="middle" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif" font-size="22" font-weight="800" fill="#fff">26/27</text>
+</svg>

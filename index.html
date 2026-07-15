@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#1c1f23">
+  <meta name="apple-mobile-web-app-title" content="PL 2026/27">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <title>Premier League 2026/27 — Fixtures and live scores</title>
+  <link rel="icon" type="image/svg+xml" href="/icon.svg">
+  <link rel="manifest" href="/site.webmanifest">
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <header class="site-header">
+    <div class="header-inner">
+      <h1>Premier League <strong>2026/27</strong></h1>
+      <p><span id="season-summary">Loading the official fixture list…</span> &nbsp;·&nbsp; <span id="tz-note">Times shown in London</span></p>
+      <div id="next-match" class="next-match">Finding the next match…</div>
+      <div id="feed-status" class="feed-status loading" role="status">Connecting to live scores…</div>
+    </div>
+  </header>
+
+  <div class="nav-wrap">
+    <div class="nav-inner">
+      <nav class="nav-tabs" aria-label="Primary navigation">
+        <button class="tab-btn active" data-tab="fixtures">Fixtures</button>
+        <button class="tab-btn" data-tab="table">Table</button>
+      </nav>
+      <div class="tz-control" role="group" aria-label="Display time zone">
+        <span class="tz-control-label">Time zone</span>
+        <button class="tz-btn active" data-tz="Europe/London">London</button>
+        <button class="tz-btn" data-tz="local">Local</button>
+        <button class="tz-btn" data-tz="Australia/Melbourne">Melbourne</button>
+        <button class="tz-btn" data-tz="Europe/Helsinki">Helsinki</button>
+      </div>
+    </div>
+  </div>
+
+  <main>
+    <section class="section visible" id="tab-fixtures">
+      <div class="round-label">
+        Fixtures <span class="pill" id="fixture-count">Loading</span>
+        <label class="filter-toggle"><input type="checkbox" id="filter-clubs"> Use clubs</label>
+        <div class="team-picker" id="team-picker">
+          <button type="button" class="team-picker-btn" id="team-picker-btn">Clubs: All</button>
+          <div class="team-picker-panel" id="team-picker-panel">
+            <div class="team-picker-actions"><strong>Filter clubs</strong><button type="button" id="team-clear">Clear</button></div>
+            <div class="team-picker-grid" id="team-picker-grid"></div>
+          </div>
+        </div>
+        <label class="filter-toggle"><input type="checkbox" id="filter-completed"> Hide completed</label>
+      </div>
+      <div id="fixture-list" class="match-list"><div class="loading-dots">Loading fixtures</div></div>
+    </section>
+
+    <section class="section" id="tab-table">
+      <div class="round-label">League Table <span class="pill">2026/27</span></div>
+      <div id="table-wrap"><div class="loading-dots">Loading table</div></div>
+    </section>
+
+    <section class="section" id="tab-club">
+      <div class="round-label">Club <span class="pill" id="club-page-pill">Select a club</span></div>
+      <div id="club-detail"></div>
+    </section>
+  </main>
+
+  <div class="quick-jump" aria-label="Quick navigation">
+    <button type="button" id="jump-next">Next match</button>
+    <button type="button" id="jump-today">Today</button>
+    <button type="button" id="jump-filters">Filters</button>
+  </div>
+
+  <footer>
+    Fixtures and live scores are refreshed from football data providers. Postponements and broadcast selections can change kick-off times.
+    Verify important details with the <a href="https://www.premierleague.com/fixtures" target="_blank" rel="noopener">official Premier League fixture list</a>.
+  </footer>
+
+  <script src="/app.js" defer></script>
+</body>
+</html>
