@@ -218,16 +218,17 @@ function renderFixture(fixture) {
   const score = hasScore(fixture) ? `${fixture.homeScore} – ${fixture.awayScore}` : 'v';
   const hiddenScore = final && hasScore(fixture) && !state.revealed.has(fixture.id);
   const classes = ['match-row', final ? 'finished' : '', live ? 'is-live' : '', isPostponed(fixture) ? 'postponed' : ''].filter(Boolean).join(' ');
-  const round = fixture.matchweek ? `MW ${fixture.matchweek}` : (fixture.round || 'League');
   const venue = [fixture.venue, fixture.city].filter(Boolean).join(', ') || 'Venue TBC';
+  const matchStatus = live
+    ? `<span class="live-pill">${escapeHtml(statusLabel(fixture))}</span><span class="detail-caret">▾</span>`
+    : statusLabel(fixture) ? `<span class="row-status">${escapeHtml(statusLabel(fixture))}</span>` : '';
   return `<div class="${classes}" data-id="${escapeHtml(fixture.id)}">
-    <div class="row-meta"><span class="row-badge">${escapeHtml(round)}</span>${live ? `<span class="live-pill">${escapeHtml(statusLabel(fixture))}</span><span class="detail-caret">▾</span>` : `<span class="row-status">${escapeHtml(statusLabel(fixture))}</span>`}</div>
     <div class="row-teams">
       <span class="row-team home">${clubLink(fixture.home)}${crestHtml(fixture.home)}</span>
       <span class="vs${hasScore(fixture) ? ' score' : ''}${hiddenScore ? ' spoiler' : ''}" title="${hiddenScore ? 'Reveal score' : ''}">${score}</span>
       <span class="row-team away">${crestHtml(fixture.away)}${clubLink(fixture.away)}</span>
     </div>
-    <div class="row-when"><span class="row-date">${escapeHtml(parts.date)}</span><span class="row-time">${escapeHtml(parts.time)}<span class="row-tz">${escapeHtml(parts.zone)}</span></span></div>
+    <div class="row-when"><span class="row-match-status">${matchStatus}</span><span class="row-date">${escapeHtml(parts.date)}</span><span class="row-time">${escapeHtml(parts.time)}<span class="row-tz">${escapeHtml(parts.zone)}</span></span></div>
     <div class="row-venue" title="${escapeHtml(venue)}">${escapeHtml(venue)}</div>
   </div>`;
 }
@@ -311,7 +312,7 @@ function renderTable() {
 function fixtureMini(fixture) {
   const parts = dateParts(fixture.kickoff);
   const score = hasScore(fixture) ? `${fixture.homeScore} – ${fixture.awayScore}` : 'v';
-  return `<div class="club-fixture${isFinal(fixture) ? ' finished' : ''}${isLive(fixture) ? ' live' : ''}"><div class="cf-meta"><span>${escapeHtml(fixture.matchweek ? `MW ${fixture.matchweek}` : fixture.round)}</span><span>${escapeHtml(isLive(fixture) || isFinal(fixture) ? statusLabel(fixture) : `${parts.date} · ${parts.time} ${parts.zone}`)}</span></div><div class="cf-teams">${escapeHtml(fixture.home.name)} <span class="vs${hasScore(fixture) ? ' score' : ''}">${score}</span> ${escapeHtml(fixture.away.name)}</div></div>`;
+  return `<div class="club-fixture${isFinal(fixture) ? ' finished' : ''}${isLive(fixture) ? ' live' : ''}"><div class="cf-meta"><span>${escapeHtml(fixture.venue || '')}</span><span>${escapeHtml(isLive(fixture) || isFinal(fixture) ? statusLabel(fixture) : `${parts.date} · ${parts.time} ${parts.zone}`)}</span></div><div class="cf-teams">${escapeHtml(fixture.home.name)} <span class="vs${hasScore(fixture) ? ' score' : ''}">${score}</span> ${escapeHtml(fixture.away.name)}</div></div>`;
 }
 
 function renderClubPage(name) {
