@@ -20,6 +20,8 @@ button, input { font: inherit; }
 
 .site-header { background: var(--ink); padding: 22px 20px 20px; }
 .header-inner { max-width: 1300px; margin: 0 auto; }
+.header-title { align-items: center; display: flex; gap: 14px; }
+.header-logo { flex: 0 0 auto; height: 58px; object-fit: contain; width: auto; }
 .site-header h1 { color: #fff; font-size: clamp(21px, 4vw, 30px); font-weight: 600; letter-spacing: -.4px; }
 .site-header h1 strong { color: #b8bcc2; }
 .site-header p { color: #9a9fa6; font-size: 13px; margin-top: 6px; }
@@ -141,6 +143,8 @@ footer a { color: var(--ink); }
 
 @media (max-width: 760px) {
   .site-header { padding: 14px; }
+  .header-title { gap: 10px; }
+  .header-logo { height: 48px; }
   .site-header h1 { font-size: 22px; }
   .next-match { display: flex; width: 100%; }
   .nav-tabs { padding: 7px 10px; }
