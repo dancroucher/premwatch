@@ -16,6 +16,7 @@ const state = {
   fixtures: [],
   standings: [],
   clubs: new Map(),
+  lineups: new Map(),
   source: '',
   filterClubs: false,
   selectedClubs: new Set(),
@@ -217,11 +218,15 @@ function renderFixture(fixture) {
   const final = isFinal(fixture);
   const score = hasScore(fixture) ? `${fixture.homeScore} – ${fixture.awayScore}` : 'v';
   const hiddenScore = final && hasScore(fixture) && !state.revealed.has(fixture.id);
-  const classes = ['match-row', final ? 'finished' : '', live ? 'is-live' : '', isPostponed(fixture) ? 'postponed' : ''].filter(Boolean).join(' ');
+  const lineup = state.lineups.get(fixture.id);
+  const hasLineups = !!(lineup && lineup.confirmed);
+  const classes = ['match-row', final ? 'finished' : '', live ? 'is-live' : '', hasLineups ? 'has-lineups' : '', isPostponed(fixture) ? 'postponed' : ''].filter(Boolean).join(' ');
   const venue = [fixture.venue, fixture.city].filter(Boolean).join(', ') || 'Venue TBC';
-  const matchStatus = live
-    ? `<span class="live-pill">${escapeHtml(statusLabel(fixture))}</span><span class="detail-caret">▾</span>`
+  const scoreStatus = live
+    ? `<span class="live-pill">${escapeHtml(statusLabel(fixture))}</span>`
     : statusLabel(fixture) ? `<span class="row-status">${escapeHtml(statusLabel(fixture))}</span>` : '';
+  const lineupStatus = hasLineups ? '<button type="button" class="lineup-pill">Line-ups</button>' : '';
+  const matchStatus = `${scoreStatus}${lineupStatus}${live || hasLineups ? '<span class="detail-caret">▾</span>' : ''}`;
   return `<div class="${classes}" data-id="${escapeHtml(fixture.id)}">
     <div class="row-teams">
       <span class="row-team home">${clubLink(fixture.home)}${crestHtml(fixture.home)}</span>
@@ -401,11 +406,42 @@ async function loadLiveEvents() {
   return { events: data.events || [], source: data.provider || 'football-feed' };
 }
 
+function nearbyLineupFixtures() {
+  const now = Date.now();
+  return state.fixtures.filter(fixture => {
+    const kickoff = fixtureTime(fixture);
+    return fixture.providerFixtureId && kickoff >= now - 4 * 60 * 60 * 1000 && kickoff <= now + 2 * 60 * 60 * 1000;
+  }).slice(0, 10);
+}
+
+async function refreshNearbyLineups() {
+  const fixtures = nearbyLineupFixtures();
+  if (!fixtures.length) return false;
+  try {
+    const ids = fixtures.map(fixture => fixture.providerFixtureId).join(',');
+    const data = await fetchJSON(`/api/live?type=lineups&ids=${encodeURIComponent(ids)}`);
+    let changed = false;
+    fixtures.forEach(fixture => {
+      const incoming = data.lineupsById && data.lineupsById[fixture.providerFixtureId];
+      if (!incoming) return;
+      const current = state.lineups.get(fixture.id);
+      if (JSON.stringify(current || null) !== JSON.stringify(incoming)) {
+        state.lineups.set(fixture.id, incoming);
+        changed = true;
+      }
+    });
+    return changed;
+  } catch (_) {
+    return false;
+  }
+}
+
 async function refreshLiveScores() {
   try {
     const result = await loadLiveEvents();
-    const changed = mergeEvents(result.events, result.source);
-    if (changed) {
+    const scoreChanged = mergeEvents(result.events, result.source);
+    const lineupsChanged = await refreshNearbyLineups();
+    if (scoreChanged || lineupsChanged) {
       state.standings = calculateStandings();
       registerClubs();
       renderFixtures();
@@ -434,7 +470,8 @@ async function openMatchDetail(row) {
     return;
   }
   const fixture = state.fixtures.find(item => item.id === row.dataset.id);
-  if (!fixture || !isLive(fixture)) return;
+  const hasLineups = state.lineups.get(fixture && fixture.id)?.confirmed;
+  if (!fixture || (!isLive(fixture) && !hasLineups)) return;
   const panel = document.createElement('div');
   panel.className = 'match-detail';
   panel.innerHTML = '<div class="md-empty">Loading live match detail…</div>';
@@ -448,7 +485,8 @@ async function refreshMatchDetail(fixture, row, panel) {
     if (!fixture.providerFixtureId) throw new Error('No detail provider available');
     data = await fetchJSON(`/api/live?type=detail&id=${encodeURIComponent(fixture.providerFixtureId)}`);
     if (data.events && data.events.length) mergeEvents(data.events, fixture.source);
-    panel.innerHTML = renderDetail(fixture, data.timeline || [], data.eventstats || []);
+    if (data.lineups) state.lineups.set(fixture.id, data.lineups);
+    panel.innerHTML = renderDetail(fixture, data.timeline || [], data.eventstats || [], data.lineups || state.lineups.get(fixture.id));
   } catch (_) {
     panel.innerHTML = '<div class="md-empty">Live detail is temporarily unavailable.</div>';
   }
@@ -458,7 +496,15 @@ async function refreshMatchDetail(fixture, row, panel) {
   }
 }
 
-function renderDetail(fixture, timeline, stats) {
+function renderLineups(data) {
+  if (!data || !data.confirmed) return '<div class="md-section"><div class="md-section-title">Line-ups</div><div class="md-empty">Teams have not been announced.</div></div>';
+  return `<div class="md-section"><div class="md-section-title">Confirmed line-ups</div><div class="lineups-grid">${data.lineups.map(team => {
+    const playerRow = player => `<li><span class="squad-number">${escapeHtml(player.shirtNumber || '–')}</span><span>${escapeHtml(player.name)}${player.captain ? ' <strong class="captain">C</strong>' : ''}</span><span class="player-position">${escapeHtml(player.position)}</span></li>`;
+    return `<div class="lineup-team"><div class="lineup-head">${team.crest ? `<img src="${escapeHtml(team.crest)}" alt="">` : ''}<div><strong>${escapeHtml(team.team)}</strong>${team.formation ? `<span>${escapeHtml(team.formation)}</span>` : ''}</div></div><ol class="player-list">${team.starters.map(playerRow).join('')}</ol><div class="subs-title">Substitutes</div><ul class="player-list substitutes">${team.substitutes.map(playerRow).join('')}</ul></div>`;
+  }).join('')}</div></div>`;
+}
+
+function renderDetail(fixture, timeline, stats, lineups) {
   const score = hasScore(fixture) ? `${fixture.homeScore} – ${fixture.awayScore}` : 'v';
   const timelineHtml = timeline.length ? `<div class="md-list">${timeline.map(event => {
     const away = event.strTeam && teamKey(event.strTeam) === teamKey(fixture.away.name);
@@ -468,7 +514,7 @@ function renderDetail(fixture, timeline, stats) {
     return `<div class="md-item${away ? ' away' : ''}"><span class="md-min">${escapeHtml(event.intTime ? `${event.intTime}'` : '')}</span><span>${icon}</span><span class="md-who">${escapeHtml(event.strPlayer || event.strTimeline || '')}${event.strAssist ? ` <span class="md-sub">(${escapeHtml(event.strAssist)})</span>` : ''}</span></div>`;
   }).join('')}</div>` : '<div class="md-empty">No match events reported yet.</div>';
   const statHtml = stats.length ? `<div class="md-section"><div class="md-section-title">Match statistics</div>${stats.slice(0, 10).map(stat => `<div class="md-stat"><span class="md-stat-value">${escapeHtml(stat.intHome)}</span><span class="md-stat-label">${escapeHtml(stat.strStat)}</span><span class="md-stat-value">${escapeHtml(stat.intAway)}</span></div>`).join('')}</div>` : '';
-  return `<div class="md-head"><span>${escapeHtml(fixture.home.name)} ${score} ${escapeHtml(fixture.away.name)}</span><span>${escapeHtml(statusLabel(fixture))}</span></div>${timelineHtml}${statHtml}`;
+  return `<div class="md-head"><span>${escapeHtml(fixture.home.name)} ${score} ${escapeHtml(fixture.away.name)}</span><span>${escapeHtml(statusLabel(fixture))}</span></div>${renderLineups(lineups)}${timelineHtml}${statHtml}`;
 }
 
 function switchTab(tab, clearHash = true) {
@@ -548,6 +594,11 @@ function installEvents() {
     if (club) { event.preventDefault(); openClub(club.dataset.club); }
   });
   $('#fixture-list').addEventListener('click', event => {
+    const lineupButton = event.target.closest('.lineup-pill');
+    if (lineupButton) {
+      openMatchDetail(lineupButton.closest('.match-row'));
+      return;
+    }
     const spoiler = event.target.closest('.spoiler');
     if (spoiler) {
       const row = spoiler.closest('.match-row');
@@ -557,7 +608,7 @@ function installEvents() {
       return;
     }
     if (event.target.closest('a')) return;
-    const row = event.target.closest('.match-row.is-live');
+    const row = event.target.closest('.match-row.is-live, .match-row.has-lineups');
     if (row) openMatchDetail(row);
   });
   window.addEventListener('hashchange', openHashClub);

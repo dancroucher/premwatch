@@ -277,6 +277,52 @@ async function playerInfo(ids) {
   return players;
 }
 
+function pulseLineups(fixture) {
+  const lists = (fixture.teamLists || []).filter(Boolean);
+  const teams = fixture.teams || [];
+  const lineups = lists.map(list => {
+    const side = teams.find(team => team.team && team.team.id === list.teamId);
+    const player = value => ({
+      id: value.id,
+      name: value.name && value.name.display || '',
+      shirtNumber: value.matchShirtNumber,
+      position: value.matchPosition || value.latestPosition || '',
+      captain: !!value.captain
+    });
+    return {
+      teamId: list.teamId,
+      team: side && side.team && side.team.name || '',
+      crest: side && side.team ? pulseCrest(side.team) : '',
+      formation: list.formation && list.formation.label || '',
+      starters: (list.lineup || []).map(player),
+      substitutes: (list.substitutes || []).map(player)
+    };
+  });
+  return { confirmed: lineups.length === 2 && lineups.every(team => team.starters.length === 11), lineups };
+}
+
+function espnLineups(data) {
+  const lineups = (data.rosters || []).map(roster => {
+    const player = value => ({
+      id: value.athlete && value.athlete.id,
+      name: value.athlete && value.athlete.displayName || '',
+      shirtNumber: value.jersey || '',
+      position: value.position && value.position.abbreviation || '',
+      captain: !!value.captain
+    });
+    const players = roster.roster || [];
+    return {
+      teamId: roster.team && roster.team.id,
+      team: roster.team && roster.team.displayName || '',
+      crest: roster.team && (roster.team.logo || roster.team.logos && roster.team.logos[0] && roster.team.logos[0].href) || '',
+      formation: roster.formation || '',
+      starters: players.filter(value => value.starter).map(player),
+      substitutes: players.filter(value => !value.starter).map(player)
+    };
+  });
+  return { confirmed: lineups.length === 2 && lineups.every(team => team.starters.length === 11), lineups };
+}
+
 async function espnDetail(id) {
   const data = await espn(`/summary?event=${encodeURIComponent(id)}`);
   const statistics = data.boxscore && data.boxscore.teams || [];
@@ -288,6 +334,7 @@ async function espnDetail(id) {
     provider: 'ESPN fallback',
     events: [],
     timeline: [],
+    lineups: espnLineups(data),
     eventstats: labels.slice(0, 10).map(label => ({ strStat: label, intHome: statValue(homeStats, label), intAway: statValue(awayStats, label) }))
   };
 }
@@ -304,6 +351,7 @@ async function detail(rawId) {
   const matchEvents = (fixture.events || fixture.goals || []).filter(event => ['G', 'B', 'S'].includes(event.type));
   const players = new Map();
   for (const list of fixture.teamLists || []) {
+    if (!list) continue;
     for (const player of [...(list.lineup || []), ...(list.substitutes || [])]) {
       players.set(player.id, { name: player.name && player.name.display || '', teamId: list.teamId });
     }
@@ -319,6 +367,7 @@ async function detail(rawId) {
   return {
     provider: 'Premier League',
     events: [pulseFixture(fixture)],
+    lineups: pulseLineups(fixture),
     timeline: matchEvents.map(event => ({
       strTimeline: event.type === 'G' ? 'Goal' : event.type === 'B' ? 'Card' : 'Substitution',
       strTimelineDetail: event.type === 'B' ? (event.description === 'R' ? 'Red card' : 'Yellow card') : event.type === 'S' ? `Substitution ${event.description === 'ON' ? 'on' : 'off'}` : 'Goal',
@@ -335,6 +384,27 @@ async function detail(rawId) {
   };
 }
 
+async function lineup(rawId) {
+  const value = String(rawId || '');
+  if (!value) return { confirmed: false, lineups: [] };
+  if (value.startsWith('espn:')) {
+    const data = await espn(`/summary?event=${encodeURIComponent(value.slice(5))}`);
+    return espnLineups(data);
+  }
+  const id = value.startsWith('pulse:') ? value.slice(6) : value;
+  return pulseLineups(await pulse(`/fixtures/${encodeURIComponent(id)}`));
+}
+
+async function lineups(rawIds) {
+  const ids = String(rawIds || '').split(',').filter(Boolean).slice(0, 10);
+  const results = await Promise.allSettled(ids.map(id => lineup(id)));
+  const lineupsById = {};
+  results.forEach((result, index) => {
+    lineupsById[ids[index]] = result.status === 'fulfilled' ? result.value : { confirmed: false, lineups: [] };
+  });
+  return { lineupsById };
+}
+
 export default async function handler(req, res) {
   try {
     const type = req.query.type || 'feed';
@@ -342,6 +412,7 @@ export default async function handler(req, res) {
     if (type === 'fixtures') body = await fixtures();
     else if (type === 'standings') body = await standings();
     else if (type === 'detail') body = await detail(req.query.id);
+    else if (type === 'lineups') body = await lineups(req.query.ids);
     else body = await feed();
 
     const cache = type === 'fixtures'
@@ -350,7 +421,9 @@ export default async function handler(req, res) {
         ? 's-maxage=60, stale-while-revalidate=300'
         : type === 'detail'
           ? 's-maxage=10, stale-while-revalidate=10'
-          : 's-maxage=15, stale-while-revalidate=15';
+          : type === 'lineups'
+            ? 's-maxage=20, stale-while-revalidate=20'
+            : 's-maxage=15, stale-while-revalidate=15';
     res.setHeader('Cache-Control', cache);
     res.status(200).json(body);
   } catch (error) {
