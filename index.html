@@ -60,8 +60,17 @@
     </section>
 
     <section class="section" id="tab-news">
-      <div class="round-label">Premier League News <span class="pill" id="news-filter-label">All clubs</span></div>
-      <p class="news-note">Uses the same club selection as the fixture filter. Headlines open on the publisher’s website.</p>
+      <div class="round-label">Premier League News <span class="pill" id="news-filter-label">All clubs</span>
+        <label class="filter-toggle"><input type="checkbox" id="news-filter-clubs"> Use clubs</label>
+        <div class="team-picker" id="news-team-picker">
+          <button type="button" class="team-picker-btn" id="news-team-picker-btn">Clubs: All</button>
+          <div class="team-picker-panel" id="news-team-picker-panel">
+            <div class="team-picker-actions"><strong>Filter news by club</strong><button type="button" id="news-team-clear">Clear</button></div>
+            <div class="team-picker-grid" id="news-team-picker-grid"></div>
+          </div>
+        </div>
+      </div>
+      <p class="news-note">Select clubs to filter headlines. Articles open on the publisher’s website.</p>
       <div id="news-grid" class="news-grid"><div class="loading-dots">Loading news</div></div>
     </section>
 

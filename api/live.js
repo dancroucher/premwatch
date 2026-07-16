@@ -384,11 +384,6 @@ async function detail(rawId) {
   };
 }
 
-function playerPhoto(player) {
-  const opta = player && player.altIds && player.altIds.opta;
-  return opta ? `https://resources.premierleague.com/premierleague/photos/players/110x140/${opta}.png` : '';
-}
-
 async function squad(teamId) {
   if (!teamId) return { players: [] };
   const query = `comp=${COMPETITION_ID}&compSeasons=${SEASON_ID}&teams=${encodeURIComponent(teamId)}&page=0&pageSize=100&altIds=true`;
@@ -414,8 +409,7 @@ async function squad(teamId) {
     position: player.info && player.info.position || '',
     positionInfo: player.info && player.info.positionInfo || '',
     nationality: player.nationalTeam && player.nationalTeam.country || '',
-    age: player.age || '',
-    photo: playerPhoto(player)
+    age: player.age || ''
   }));
   return { provider: 'Premier League', players };
 }

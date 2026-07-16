@@ -26,6 +26,8 @@ const state = {
   source: '',
   filterClubs: false,
   selectedClubs: new Set(),
+  newsFilterClubs: false,
+  newsSelectedClubs: new Set(),
   hideCompleted: false,
   revealed: new Set(),
   detailTimers: new Map(),
@@ -42,8 +44,10 @@ function loadPreferences() {
   try {
     const prefs = JSON.parse(localStorage.getItem(PREF_KEY) || '{}');
     state.filterClubs = !!prefs.filterClubs;
+    state.newsFilterClubs = !!prefs.newsFilterClubs;
     state.hideCompleted = !!prefs.hideCompleted;
     state.selectedClubs = new Set(Array.isArray(prefs.selectedClubs) ? prefs.selectedClubs : []);
+    state.newsSelectedClubs = new Set(Array.isArray(prefs.newsSelectedClubs) ? prefs.newsSelectedClubs : []);
     state.revealed = new Set(Array.isArray(prefs.revealed) ? prefs.revealed : []);
   } catch (_) { /* storage is optional */ }
 }
@@ -52,8 +56,10 @@ function savePreferences() {
   try {
     localStorage.setItem(PREF_KEY, JSON.stringify({
       filterClubs: state.filterClubs,
+      newsFilterClubs: state.newsFilterClubs,
       hideCompleted: state.hideCompleted,
       selectedClubs: [...state.selectedClubs],
+      newsSelectedClubs: [...state.newsSelectedClubs],
       revealed: [...state.revealed]
     }));
   } catch (_) { /* storage is optional */ }
@@ -392,10 +398,7 @@ function renderSquad(squad, club) {
   return `<div class="squad-groups">${POSITION_GROUPS.map(([code, label]) => {
     const players = squad.players.filter(player => player.position === code).sort((a, b) => (Number(a.shirtNumber) || 999) - (Number(b.shirtNumber) || 999) || a.name.localeCompare(b.name));
     if (!players.length) return '';
-    return `<section class="squad-group"><h4>${label}</h4><div class="squad-grid">${players.map(player => {
-      const photo = player.photo || '/player-placeholder.svg';
-      return `<article class="squad-player"><img class="player-photo" src="${escapeHtml(photo)}" data-fallback="/player-placeholder.svg" alt="" loading="lazy"><div class="squad-player-info"><strong><span class="squad-shirt">${escapeHtml(player.shirtNumber || '–')}</span>${escapeHtml(player.name)}</strong><span>${escapeHtml(player.positionInfo || label.slice(0, -1))}</span>${player.nationality ? `<span>${escapeHtml(player.nationality)}</span>` : ''}</div></article>`;
-    }).join('')}</div></section>`;
+    return `<section class="squad-group"><h4>${label}</h4><div class="squad-grid">${players.map(player => `<article class="squad-player"><span class="squad-shirt">${escapeHtml(player.shirtNumber || '–')}</span><strong>${escapeHtml(player.name)}</strong><span class="squad-role">${escapeHtml(player.positionInfo || label.slice(0, -1))}</span><span class="squad-nationality">${escapeHtml(player.nationality || '')}</span></article>`).join('')}</div></section>`;
   }).join('')}</div>`;
 }
 
@@ -616,8 +619,8 @@ function renderDetail(fixture, timeline, stats, lineups) {
 }
 
 function selectedNewsClubs() {
-  if (!state.filterClubs || !state.selectedClubs.size) return [];
-  return [...state.selectedClubs].map(key => state.clubs.get(key)?.name).filter(Boolean).sort();
+  if (!state.newsFilterClubs || !state.newsSelectedClubs.size) return [];
+  return [...state.newsSelectedClubs].map(key => state.clubs.get(key)?.name).filter(Boolean).sort();
 }
 
 function newsDate(value) {
@@ -706,10 +709,22 @@ function renderClubPicker() {
   updateClubPickerButton();
 }
 
+function renderNewsClubPicker() {
+  const clubs = [...state.clubs.entries()].sort((a, b) => a[1].name.localeCompare(b[1].name));
+  $('#news-team-picker-grid').innerHTML = clubs.map(([key, club]) => `<label class="team-choice"><input type="checkbox" value="${escapeHtml(key)}"${state.newsSelectedClubs.has(key) ? ' checked' : ''}>${crestHtml(club)}<span>${escapeHtml(club.name)}</span></label>`).join('');
+  updateNewsClubPickerButton();
+}
+
 function updateClubPickerButton() {
   $('#team-picker').classList.toggle('disabled', !state.filterClubs);
   const count = state.selectedClubs.size;
   $('#team-picker-btn').textContent = !state.filterClubs ? (count ? `Clubs off (${count})` : 'Clubs off') : count === 0 ? 'Clubs: All' : count === 1 ? state.clubs.get([...state.selectedClubs][0])?.name || '1 club' : `Clubs: ${count}`;
+}
+
+function updateNewsClubPickerButton() {
+  $('#news-team-picker').classList.toggle('disabled', !state.newsFilterClubs);
+  const count = state.newsSelectedClubs.size;
+  $('#news-team-picker-btn').textContent = !state.newsFilterClubs ? (count ? `Clubs off (${count})` : 'Clubs off') : count === 0 ? 'Clubs: All' : count === 1 ? state.clubs.get([...state.newsSelectedClubs][0])?.name || '1 club' : `Clubs: ${count}`;
 }
 
 function installEvents() {
@@ -719,7 +734,6 @@ function installEvents() {
     state.filterClubs = event.target.checked;
     updateClubPickerButton();
     renderFixtures();
-    newsFilterChanged();
     savePreferences();
   });
   $('#filter-completed').addEventListener('change', event => {
@@ -734,7 +748,6 @@ function installEvents() {
     $('#filter-clubs').checked = false;
     renderClubPicker();
     renderFixtures();
-    newsFilterChanged();
     savePreferences();
   });
   $('#team-picker-grid').addEventListener('change', event => {
@@ -745,6 +758,30 @@ function installEvents() {
     $('#filter-clubs').checked = state.filterClubs;
     updateClubPickerButton();
     renderFixtures();
+    savePreferences();
+  });
+  $('#news-filter-clubs').addEventListener('change', event => {
+    state.newsFilterClubs = event.target.checked;
+    updateNewsClubPickerButton();
+    newsFilterChanged();
+    savePreferences();
+  });
+  $('#news-team-picker-btn').addEventListener('click', () => $('#news-team-picker').classList.toggle('open'));
+  $('#news-team-clear').addEventListener('click', () => {
+    state.newsSelectedClubs.clear();
+    state.newsFilterClubs = false;
+    $('#news-filter-clubs').checked = false;
+    renderNewsClubPicker();
+    newsFilterChanged();
+    savePreferences();
+  });
+  $('#news-team-picker-grid').addEventListener('change', event => {
+    const input = event.target.closest('input[type="checkbox"]');
+    if (!input) return;
+    if (input.checked) state.newsSelectedClubs.add(input.value); else state.newsSelectedClubs.delete(input.value);
+    if (state.newsSelectedClubs.size) state.newsFilterClubs = true;
+    $('#news-filter-clubs').checked = state.newsFilterClubs;
+    updateNewsClubPickerButton();
     newsFilterChanged();
     savePreferences();
   });
@@ -756,6 +793,7 @@ function installEvents() {
   }, true);
   document.addEventListener('click', event => {
     if (!$('#team-picker').contains(event.target)) $('#team-picker').classList.remove('open');
+    if (!$('#news-team-picker').contains(event.target)) $('#news-team-picker').classList.remove('open');
     const club = event.target.closest('[data-club]');
     if (club) { event.preventDefault(); openClub(club.dataset.club); }
   });
@@ -794,6 +832,7 @@ async function initialise() {
   loadPreferences();
   installEvents();
   $('#filter-clubs').checked = state.filterClubs;
+  $('#news-filter-clubs').checked = state.newsFilterClubs;
   $('#filter-completed').checked = state.hideCompleted;
 
   try {
@@ -804,6 +843,7 @@ async function initialise() {
     await loadStandings();
     registerClubs();
     renderClubPicker();
+    renderNewsClubPicker();
     renderFixtures();
     renderTable();
     updateSummary();
