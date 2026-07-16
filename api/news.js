@@ -46,23 +46,6 @@ function element(item, tag) {
   return match ? decode(match[1]) : '';
 }
 
-function attribute(tag, name) {
-  const match = tag.match(new RegExp(`${name}=["']([^"']+)["']`, 'i'));
-  return match ? decode(match[1]) : '';
-}
-
-function imageFromItem(item) {
-  const media = [...item.matchAll(/<media:(?:content|thumbnail)\b[^>]*>/gi)];
-  if (media.length) return attribute(media[media.length - 1][0], 'url');
-  const enclosure = item.match(/<enclosure\b[^>]*>/i);
-  if (enclosure) return attribute(enclosure[0], 'url');
-  const bing = element(item, 'News:Image');
-  if (bing) return bing.replace(/^http:\/\//i, 'https://');
-  const description = element(item, 'description');
-  const image = description.match(/<img[^>]+src=["']([^"']+)/i);
-  return image ? decode(image[1]) : '';
-}
-
 function articleLink(item) {
   const raw = element(item, 'link');
   if (!raw) return '';
@@ -95,7 +78,6 @@ function parseFeed(xml, fallbackSource, forcedClub = '') {
       title,
       description,
       link: articleLink(item),
-      image: imageFromItem(item),
       source,
       publishedAt: element(item, 'pubDate'),
       clubs

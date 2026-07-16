@@ -639,11 +639,7 @@ function renderNews() {
     grid.innerHTML = '<div class="empty-state"><h2>No matching headlines</h2><p>Try clearing the club filter or check again shortly.</p></div>';
     return;
   }
-  grid.innerHTML = state.news.map(article => {
-    const image = article.image || '/news-placeholder.svg';
-    const tags = (article.clubs || []).slice(0, 3).map(club => `<span>${escapeHtml(club)}</span>`).join('');
-    return `<article class="news-card"><a class="news-image" href="${escapeHtml(article.link)}" target="_blank" rel="noopener noreferrer"><img src="${escapeHtml(image)}" data-fallback="/news-placeholder.svg" alt="" loading="lazy"></a><div class="news-body"><div class="news-meta"><span>${escapeHtml(article.source)}</span><time>${escapeHtml(newsDate(article.publishedAt))}</time></div><h2><a href="${escapeHtml(article.link)}" target="_blank" rel="noopener noreferrer">${escapeHtml(article.title)}</a></h2>${article.description ? `<p>${escapeHtml(article.description)}</p>` : ''}${tags ? `<div class="news-tags">${tags}</div>` : ''}</div></article>`;
-  }).join('');
+  grid.innerHTML = state.news.map(article => `<article class="news-card"><h2><a href="${escapeHtml(article.link)}" target="_blank" rel="noopener noreferrer">${escapeHtml(article.title)}</a></h2><div class="news-meta"><span>${escapeHtml(article.source)}</span><time>${escapeHtml(newsDate(article.publishedAt))}</time></div></article>`).join('');
 }
 
 async function loadNews(force = false) {
