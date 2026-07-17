@@ -294,6 +294,7 @@ function pulseLineups(fixture) {
       team: side && side.team && side.team.name || '',
       crest: side && side.team ? pulseCrest(side.team) : '',
       formation: list.formation && list.formation.label || '',
+      formationLines: list.formation && Array.isArray(list.formation.players) ? list.formation.players : [],
       starters: (list.lineup || []).map(player),
       substitutes: (list.substitutes || []).map(player)
     };
@@ -316,6 +317,7 @@ function espnLineups(data) {
       team: roster.team && roster.team.displayName || '',
       crest: roster.team && (roster.team.logo || roster.team.logos && roster.team.logos[0] && roster.team.logos[0].href) || '',
       formation: typeof roster.formation === 'string' ? roster.formation : roster.formation && roster.formation.label || '',
+      formationLines: [],
       starters: players.filter(value => value.starter).map(player),
       substitutes: players.filter(value => !value.starter).map(player)
     };

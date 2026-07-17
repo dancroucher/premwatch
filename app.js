@@ -20,15 +20,19 @@ const state = {
   lineups: new Map(),
   squads: new Map(),
   squadRequests: new Map(),
+  transfers: new Map(),
+  transferRequests: new Map(),
   news: [],
   newsKey: '',
   newsLoading: false,
+  health: { league: {}, europe: {}, live: {} },
   source: '',
   filterClubs: false,
   selectedClubs: new Set(),
   newsFilterClubs: false,
   newsSelectedClubs: new Set(),
   includeEurope: true,
+  favoriteClub: '',
   hideCompleted: false,
   revealed: new Set(),
   detailTimers: new Map(),
@@ -47,6 +51,7 @@ function loadPreferences() {
     state.filterClubs = !!prefs.filterClubs;
     state.newsFilterClubs = !!prefs.newsFilterClubs;
     state.includeEurope = prefs.includeEurope !== false;
+    state.favoriteClub = typeof prefs.favoriteClub === 'string' ? prefs.favoriteClub : '';
     state.hideCompleted = !!prefs.hideCompleted;
     state.selectedClubs = new Set(Array.isArray(prefs.selectedClubs) ? prefs.selectedClubs : []);
     state.newsSelectedClubs = new Set(Array.isArray(prefs.newsSelectedClubs) ? prefs.newsSelectedClubs : []);
@@ -60,6 +65,7 @@ function savePreferences() {
       filterClubs: state.filterClubs,
       newsFilterClubs: state.newsFilterClubs,
       includeEurope: state.includeEurope,
+      favoriteClub: state.favoriteClub,
       hideCompleted: state.hideCompleted,
       selectedClubs: [...state.selectedClubs],
       newsSelectedClubs: [...state.newsSelectedClubs],
@@ -172,6 +178,7 @@ function isCompleteFixtureList(fixtures) {
 
 async function loadOfficialFixtures() {
   const data = await fetchJSON('/api/live?type=fixtures');
+  state.health.league = { provider: data.provider || 'Football feed', validation: data.validation || null, updatedAt: new Date().toISOString(), ok: true };
   const fixtures = (data.events || []).map(event => normaliseFixture(event, data.provider || 'football-feed'));
   if (isCompleteFixtureList(fixtures)) return { fixtures, source: data.provider || 'Premier League feed' };
   throw new Error(`Fixture provider returned ${fixtures.length} of ${COMPETITION.expectedFixtures} fixtures`);
@@ -180,10 +187,12 @@ async function loadOfficialFixtures() {
 async function loadEuropeanFixtures() {
   try {
     const data = await fetchJSON('/api/europe?type=fixtures');
-    return (data.events || [])
-      .map(event => normaliseFixture(event, 'uefa'))
-      .filter(fixture => state.clubs.has(teamKey(fixture.home.name)) || state.clubs.has(teamKey(fixture.away.name)));
-  } catch (_) {
+    const published = (data.events || []).map(event => normaliseFixture(event, 'uefa'));
+    const relevant = published.filter(fixture => state.clubs.has(teamKey(fixture.home.name)) || state.clubs.has(teamKey(fixture.away.name)));
+    state.health.europe = { provider: data.provider || 'UEFA', published: published.length, relevant: relevant.length, updatedAt: new Date().toISOString(), ok: true };
+    return relevant;
+  } catch (error) {
+    state.health.europe = { provider: 'UEFA', ok: false, error: error.message, updatedAt: new Date().toISOString() };
     return [];
   }
 }
@@ -199,18 +208,20 @@ async function loadStandings() {
 
 function demoTeamSheet(club) {
   const positions = ['GK', 'D', 'D', 'D', 'D', 'M', 'M', 'M', 'F', 'F', 'F'];
+  const starters = positions.map((position, index) => ({
+    id: `demo-${teamKey(club.name)}-${index + 1}`,
+    name: `${club.name} Player ${index + 1}`,
+    shirtNumber: index + 1,
+    position,
+    captain: index === 5
+  }));
   return {
     teamId: club.id,
     team: club.name,
     crest: club.crest,
     formation: '4-3-3',
-    starters: positions.map((position, index) => ({
-      id: `demo-${teamKey(club.name)}-${index + 1}`,
-      name: `${club.name} Player ${index + 1}`,
-      shirtNumber: index + 1,
-      position,
-      captain: index === 5
-    })),
+    formationLines: [[starters[0].id], starters.slice(1, 5).map(player => player.id), starters.slice(5, 8).map(player => player.id), starters.slice(8).map(player => player.id)],
+    starters,
     substitutes: Array.from({ length: 9 }, (_, index) => ({
       id: `demo-${teamKey(club.name)}-sub-${index + 1}`,
       name: `${club.name} Substitute ${index + 1}`,
@@ -267,6 +278,15 @@ function registerClubs() {
   }
 }
 
+function updateFavoriteClubUI() {
+  const button = $('#favorite-club-link');
+  const club = state.favoriteClub && state.clubs.get(state.favoriteClub);
+  if (!button) return;
+  button.hidden = !club;
+  button.textContent = club ? `★ ${club.name}` : '';
+  button.dataset.club = club ? club.name : '';
+}
+
 function fixtureTime(fixture) {
   const value = new Date(fixture.kickoff).getTime();
   return Number.isNaN(value) ? Number.MAX_SAFE_INTEGER : value;
@@ -316,7 +336,8 @@ function renderFixture(fixture) {
   const hiddenScore = final && hasScore(fixture) && !state.revealed.has(fixture.id);
   const lineup = state.lineups.get(fixture.id);
   const hasLineups = !!(lineup && lineup.confirmed);
-  const classes = ['match-row', fixture.isEuropean ? 'european' : '', final ? 'finished' : '', live ? 'is-live' : '', hasLineups ? 'has-lineups' : '', isPostponed(fixture) ? 'postponed' : ''].filter(Boolean).join(' ');
+  const favorite = state.favoriteClub && [fixture.home.name, fixture.away.name].some(name => teamKey(name) === state.favoriteClub);
+  const classes = ['match-row', favorite ? 'favorite' : '', fixture.isEuropean ? 'european' : '', final ? 'finished' : '', live ? 'is-live' : '', hasLineups ? 'has-lineups' : '', isPostponed(fixture) ? 'postponed' : ''].filter(Boolean).join(' ');
   const venue = [fixture.venue, fixture.city].filter(Boolean).join(', ') || 'Venue TBC';
   const scoreStatus = live
     ? `<span class="live-pill">${escapeHtml(statusLabel(fixture))}</span>`
@@ -463,6 +484,29 @@ async function loadClubSquad(key, club) {
   state.squadRequests.set(key, request);
 }
 
+function transferLabel(type) {
+  return ({ 'transfer-in': 'Signed', 'transfer-out': 'Departed', 'loan-in': 'Loan in', 'loan-out': 'Loan out', 'loan-recall': 'Loan recalled', 'player-released': 'Released', 'end-of-loan': 'End of loan' })[type] || type;
+}
+
+function renderTransfers(data) {
+  if (!data) return '<div class="loading-dots">Loading confirmed transfers</div>';
+  if (!data.length) return '<p class="md-empty">No confirmed transfers are currently listed.</p>';
+  return `<div class="transfer-list">${data.map(item => `<article class="transfer-row"><span class="transfer-type ${escapeHtml(item.type)}">${escapeHtml(transferLabel(item.type))}</span><div><strong>${escapeHtml(item.player)}</strong>${item.detail ? `<span>${escapeHtml(item.detail)}</span>` : ''}</div>${item.link ? `<a href="${escapeHtml(item.link)}" target="_blank" rel="noopener noreferrer">Official details</a>` : ''}</article>`).join('')}</div>`;
+}
+
+async function loadClubTransfers(key, club) {
+  if (state.transfers.has(key) || state.transferRequests.has(key)) return;
+  const request = fetchJSON(`/api/transfers?club=${encodeURIComponent(club.name)}`)
+    .then(data => state.transfers.set(key, data.transfers || []))
+    .catch(() => state.transfers.set(key, []))
+    .finally(() => {
+      state.transferRequests.delete(key);
+      const hash = location.hash.match(/^#club=(.+)$/);
+      if (hash && teamKey(decodeURIComponent(hash[1])) === key) renderClubPage(club.name);
+    });
+  state.transferRequests.set(key, request);
+}
+
 function renderClubPage(name) {
   const key = teamKey(name);
   const club = state.clubs.get(key);
@@ -478,8 +522,10 @@ function renderClubPage(name) {
   const upcoming = matches.filter(fixture => !isFinal(fixture) && !isPostponed(fixture)).sort((a, b) => fixtureTime(a) - fixtureTime(b)).slice(0, 8);
   const tableRow = (state.standings.length ? state.standings : calculateStandings()).find(row => teamKey(row.team) === key);
   const squad = state.squads.get(key);
-  target.innerHTML = `<div class="club-card"><div class="club-head">${crestHtml(club, true)}<div><div class="club-title">${escapeHtml(club.name)}</div><div class="club-meta">${tableRow ? `${tableRow.rank}${ordinal(tableRow.rank)} · ${tableRow.points} points · ${tableRow.played} played` : `${matches.length} fixtures`}</div></div></div>${renderClubInfo(squad)}<div class="club-sections"><div><div class="club-section-title">Upcoming fixtures</div>${upcoming.length ? upcoming.map(fixtureMini).join('') : '<p class="md-empty">No upcoming fixtures available.</p>'}</div><div><div class="club-section-title">Recent results</div>${completed.length ? completed.map(fixtureMini).join('') : '<p class="md-empty">No results yet.</p>'}</div></div><div class="club-squad"><div class="club-section-title">2026/27 squad</div>${renderSquad(squad, club)}</div></div>`;
+  const transfers = state.transfers.get(key);
+  target.innerHTML = `<div class="club-card"><div class="club-head">${crestHtml(club, true)}<div><div class="club-title">${escapeHtml(club.name)}</div><div class="club-meta">${tableRow ? `${tableRow.rank}${ordinal(tableRow.rank)} · ${tableRow.points} points · ${tableRow.played} played` : `${matches.length} fixtures`}</div></div><button type="button" class="favorite-action${state.favoriteClub === key ? ' active' : ''}" data-favorite-club="${escapeHtml(key)}">${state.favoriteClub === key ? '★ Favourite club' : '☆ Set as favourite'}</button></div>${renderClubInfo(squad)}<div class="club-sections"><div><div class="club-section-title">Upcoming fixtures</div>${upcoming.length ? upcoming.map(fixtureMini).join('') : '<p class="md-empty">No upcoming fixtures available.</p>'}</div><div><div class="club-section-title">Recent results</div>${completed.length ? completed.map(fixtureMini).join('') : '<p class="md-empty">No results yet.</p>'}</div></div><div class="club-transfers"><div class="club-section-title">Confirmed transfers</div>${renderTransfers(transfers)}</div><div class="club-squad"><div class="club-section-title">2026/27 squad</div>${renderSquad(squad, club)}</div></div>`;
   loadClubSquad(key, club);
+  loadClubTransfers(key, club);
 }
 
 function ordinal(number) {
@@ -490,16 +536,19 @@ function ordinal(number) {
 
 function updateNextMatch() {
   const target = $('#next-match');
-  const live = state.fixtures.find(isLive);
   const now = Date.now();
-  const next = live || state.fixtures.find(fixture => !isFinal(fixture) && !isPostponed(fixture) && fixtureTime(fixture) > now);
+  const favoriteFixtures = state.favoriteClub ? state.fixtures.filter(fixture => [fixture.home.name, fixture.away.name].some(name => teamKey(name) === state.favoriteClub)) : [];
+  const pool = favoriteFixtures.length ? favoriteFixtures : state.fixtures;
+  const live = pool.find(isLive);
+  const next = live || pool.find(fixture => !isFinal(fixture) && !isPostponed(fixture) && fixtureTime(fixture) > now);
   if (!next) {
     target.innerHTML = state.fixtures.length ? '<strong>No upcoming fixture found</strong>' : '<strong>Awaiting the official fixture list</strong>';
     return;
   }
   const parts = dateParts(next.kickoff);
   const countdown = live ? statusLabel(next) : countdownText(fixtureTime(next) - now);
-  target.innerHTML = `<strong>${live ? 'Live now' : 'Next match'}</strong><span>${escapeHtml(next.home.name)} v ${escapeHtml(next.away.name)}</span><span class="nm-muted">${escapeHtml(parts.date)} ${escapeHtml(parts.time)} ${escapeHtml(parts.zone)}</span><span class="nm-count">${escapeHtml(countdown)}</span>`;
+  const label = live ? 'Live now' : state.favoriteClub && favoriteFixtures.length ? 'Favourite club next' : 'Next match';
+  target.innerHTML = `<strong>${label}</strong><span>${escapeHtml(next.home.name)} v ${escapeHtml(next.away.name)}</span><span class="nm-muted">${escapeHtml(parts.date)} ${escapeHtml(parts.time)} ${escapeHtml(parts.zone)}</span><span class="nm-count">${escapeHtml(countdown)}</span>`;
 }
 
 function countdownText(milliseconds) {
@@ -516,6 +565,21 @@ function setFeedStatus(className, text) {
   const target = $('#feed-status');
   target.className = `feed-status ${className}`;
   target.textContent = text;
+}
+
+function healthTime(value) {
+  if (!value) return 'Not checked';
+  return new Intl.DateTimeFormat('en-GB', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit' }).format(new Date(value));
+}
+
+function renderDataHealth() {
+  const panel = $('#data-health-panel');
+  if (!panel) return;
+  const league = state.health.league || {};
+  const europe = state.health.europe || {};
+  const live = state.health.live || {};
+  const validation = league.validation;
+  panel.innerHTML = `<div class="health-grid"><div><span class="health-dot ${league.ok ? 'ok' : 'bad'}"></span><strong>League schedule</strong><span>${escapeHtml(league.provider || 'Unavailable')}</span><small>${validation ? (validation.matched ? '380 fixtures matched against ESPN' : 'Secondary validation unavailable or disagreed') : 'Awaiting validation'} · ${escapeHtml(healthTime(league.updatedAt))}</small></div><div><span class="health-dot ${europe.ok ? 'ok' : 'bad'}"></span><strong>European schedule</strong><span>${escapeHtml(europe.provider || 'UEFA')}</span><small>${europe.ok ? `${europe.published || 0} UEFA fixtures checked · ${europe.relevant || 0} relevant` : 'Feed unavailable'} · ${escapeHtml(healthTime(europe.updatedAt))}</small></div><div><span class="health-dot ${live.ok ? 'ok' : 'bad'}"></span><strong>Live scores</strong><span>${escapeHtml(live.providers || 'Not checked')}</span><small>${live.ok ? `${live.events || 0} current events returned` : 'Last check failed'} · ${escapeHtml(healthTime(live.updatedAt))}</small></div></div>`;
 }
 
 function updateEuropeFilter() {
@@ -563,9 +627,10 @@ async function loadLiveEvents() {
     fetchJSON('/api/live?type=feed'),
     fetchJSON('/api/europe?type=feed')
   ]);
-  const events = results.flatMap(result => result.status === 'fulfilled' ? (result.value.events || []) : []);
+  const fulfilled = results.filter(result => result.status === 'fulfilled');
+  const events = fulfilled.flatMap(result => result.value.events || []);
   if (!events.length && results.every(result => result.status === 'rejected')) throw new Error('All live feeds unavailable');
-  return { events, source: 'live-football-feeds' };
+  return { events, source: 'live-football-feeds', providers: fulfilled.map(result => result.value.provider).filter(Boolean).join(' + ') || 'Football feeds' };
 }
 
 function nearbyLineupFixtures() {
@@ -606,6 +671,8 @@ async function refreshNearbyLineups() {
 async function refreshLiveScores() {
   try {
     const result = await loadLiveEvents();
+    state.health.live = { ok: true, providers: result.providers, events: result.events.length, updatedAt: new Date().toISOString() };
+    renderDataHealth();
     const scoreChanged = mergeEvents(result.events, result.source);
     const lineupsChanged = await refreshNearbyLineups();
     if (scoreChanged || lineupsChanged) {
@@ -620,7 +687,9 @@ async function refreshLiveScores() {
     const liveCount = state.fixtures.filter(isLive).length;
     const stamp = new Intl.DateTimeFormat('en-GB', { timeZone: effectiveTimeZone(), hour: '2-digit', minute: '2-digit', second: '2-digit' }).format(new Date());
     setFeedStatus(liveCount ? 'live' : 'ok', liveCount ? `● ${liveCount} live · updated ${stamp}` : `Scores checked · ${stamp}`);
-  } catch (_) {
+  } catch (error) {
+    state.health.live = { ok: false, error: error.message, updatedAt: new Date().toISOString() };
+    renderDataHealth();
     setFeedStatus('off', 'Live score feed unavailable — retrying automatically');
   } finally {
     clearTimeout(state.refreshTimer);
@@ -668,11 +737,19 @@ async function refreshMatchDetail(fixture, row, panel) {
   }
 }
 
+function renderFormation(team) {
+  if (!team.formation || !Array.isArray(team.formationLines) || team.formationLines.length < 2) return '';
+  const players = new Map(team.starters.map(player => [String(player.id), player]));
+  const lines = team.formationLines.map(line => line.map(id => players.get(String(id))).filter(Boolean)).filter(line => line.length);
+  if (lines.length < 2 || lines.flat().length !== 11) return '';
+  return `<div class="formation-pitch" aria-label="${escapeHtml(`${team.team} ${team.formation} formation`)}">${lines.map(line => `<div class="formation-line">${line.map(player => `<div class="formation-player"><span>${escapeHtml(player.shirtNumber || '')}</span><small>${escapeHtml(player.name.split(' ').slice(-1)[0])}</small></div>`).join('')}</div>`).join('')}</div>`;
+}
+
 function renderLineups(data) {
   if (!data || !data.confirmed) return '<div class="md-section"><div class="md-section-title">Line-ups</div><div class="md-empty">Teams have not been announced.</div></div>';
   return `<div class="md-section"><div class="md-section-title">Confirmed line-ups</div><div class="lineups-grid">${data.lineups.map(team => {
     const playerRow = player => `<li><span class="squad-number">${escapeHtml(player.shirtNumber || '–')}</span><span>${escapeHtml(player.name)}${player.captain ? ' <strong class="captain">C</strong>' : ''}</span><span class="player-position">${escapeHtml(player.position)}</span></li>`;
-    return `<div class="lineup-team"><div class="lineup-head">${team.crest ? `<img src="${escapeHtml(team.crest)}" data-fallback="/icon.svg" alt="">` : ''}<div><strong>${escapeHtml(team.team)}</strong>${team.formation ? `<span>${escapeHtml(team.formation)}</span>` : ''}</div></div><ol class="player-list">${team.starters.map(playerRow).join('')}</ol><div class="subs-title">Substitutes</div><ul class="player-list substitutes">${team.substitutes.map(playerRow).join('')}</ul></div>`;
+    return `<div class="lineup-team"><div class="lineup-head">${team.crest ? `<img src="${escapeHtml(team.crest)}" data-fallback="/icon.svg" alt="">` : ''}<div><strong>${escapeHtml(team.team)}</strong>${team.formation ? `<span>${escapeHtml(team.formation)}</span>` : ''}</div></div>${renderFormation(team)}<ol class="player-list">${team.starters.map(playerRow).join('')}</ol><div class="subs-title">Substitutes</div><ul class="player-list substitutes">${team.substitutes.map(playerRow).join('')}</ul></div>`;
   }).join('')}</div></div>`;
 }
 
@@ -713,7 +790,9 @@ function renderNews() {
     grid.innerHTML = '<div class="empty-state"><h2>No matching headlines</h2><p>Try clearing the club filter or check again shortly.</p></div>';
     return;
   }
-  grid.innerHTML = state.news.map(article => `<article class="news-card"><h2><a href="${escapeHtml(article.link)}" target="_blank" rel="noopener noreferrer">${escapeHtml(article.title)}</a></h2><div class="news-meta"><span>${escapeHtml(article.source)}</span><time>${escapeHtml(newsDate(article.publishedAt))}</time></div></article>`).join('');
+  const favoriteName = state.favoriteClub && state.clubs.get(state.favoriteClub)?.name;
+  const articles = [...state.news].sort((a, b) => favoriteName ? Number((b.clubs || []).includes(favoriteName)) - Number((a.clubs || []).includes(favoriteName)) : 0);
+  grid.innerHTML = articles.map(article => `<article class="news-card"><h2><a href="${escapeHtml(article.link)}" target="_blank" rel="noopener noreferrer">${escapeHtml(article.title)}</a></h2><div class="news-meta"><span>${escapeHtml(article.source)}</span><time>${escapeHtml(newsDate(article.publishedAt))}</time></div></article>`).join('');
 }
 
 async function loadNews(force = false) {
@@ -800,6 +879,13 @@ function updateNewsClubPickerButton() {
 
 function installEvents() {
   $$('.tab-btn').forEach(button => button.addEventListener('click', () => switchTab(button.dataset.tab)));
+  $('#data-health-toggle').addEventListener('click', () => {
+    const panel = $('#data-health-panel');
+    const open = panel.hidden;
+    panel.hidden = !open;
+    $('#data-health-toggle').setAttribute('aria-expanded', String(open));
+    renderDataHealth();
+  });
 
   $('#filter-clubs').addEventListener('change', event => {
     state.filterClubs = event.target.checked;
@@ -870,6 +956,17 @@ function installEvents() {
   document.addEventListener('click', event => {
     if (!$('#team-picker').contains(event.target)) $('#team-picker').classList.remove('open');
     if (!$('#news-team-picker').contains(event.target)) $('#news-team-picker').classList.remove('open');
+    const favorite = event.target.closest('[data-favorite-club]');
+    if (favorite) {
+      const key = favorite.dataset.favoriteClub;
+      state.favoriteClub = state.favoriteClub === key ? '' : key;
+      savePreferences();
+      updateFavoriteClubUI();
+      renderFixtures();
+      updateNextMatch();
+      renderClubPage(state.clubs.get(key)?.name || '');
+      return;
+    }
     const club = event.target.closest('[data-club]');
     if (club) { event.preventDefault(); openClub(club.dataset.club); }
   });
@@ -919,6 +1016,7 @@ async function initialise() {
     if (DEMO_LIVE) applyLiveDemo();
     await loadStandings();
     registerClubs();
+    updateFavoriteClubUI();
     const europeanFixtures = await loadEuropeanFixtures();
     state.fixtures.push(...europeanFixtures);
     state.fixtures.sort((a, b) => fixtureTime(a) - fixtureTime(b));
@@ -927,13 +1025,16 @@ async function initialise() {
     renderFixtures();
     renderTable();
     updateSummary();
+    renderDataHealth();
     setFeedStatus(DEMO_LIVE ? 'live' : 'ok', DEMO_LIVE ? '● Demo match live — simulated data' : `${state.source} fixture data loaded`);
-  } catch (_) {
+  } catch (error) {
+    state.health.league = { ok: false, error: error.message, updatedAt: new Date().toISOString() };
     state.fixtures = [];
     state.standings = [];
     renderFixtures();
     renderTable();
     updateSummary();
+    renderDataHealth();
     setFeedStatus('off', 'Fixture providers unavailable — retry on refresh');
   }
 

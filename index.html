@@ -20,10 +20,12 @@
         <div>
           <h1>Findus Premier League <strong>2026/27</strong></h1>
           <p><span id="season-summary">Loading the official fixture list…</span></p>
+          <button type="button" id="favorite-club-link" class="favorite-club-link" hidden></button>
         </div>
       </div>
       <div id="next-match" class="next-match">Finding the next match…</div>
-      <div id="feed-status" class="feed-status loading" role="status">Connecting to live scores…</div>
+      <div class="status-row"><div id="feed-status" class="feed-status loading" role="status">Connecting to live scores…</div><button type="button" id="data-health-toggle" class="data-health-toggle" aria-expanded="false">Data health</button></div>
+      <div id="data-health-panel" class="data-health-panel" hidden></div>
     </div>
   </header>
 
