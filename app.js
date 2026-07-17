@@ -372,16 +372,8 @@ function visibleFixtures() {
   });
 }
 
-function renderTvListings() {
-  const target = $('#tv-listings');
-  if (!target) return;
-  const fixtures = state.fixtures.filter(fixture => fixture.broadcasters?.length && fixtureTime(fixture) > Date.now()).sort((a, b) => fixtureTime(a) - fixtureTime(b));
-  target.innerHTML = fixtures.length ? `<div class="tv-listing-grid">${fixtures.map(fixture => { const parts = dateParts(fixture.kickoff); return `<div><strong>${escapeHtml(fixture.home.name)} v ${escapeHtml(fixture.away.name)}</strong><span>${escapeHtml(parts.date)} · ${escapeHtml(parts.time)} · ${escapeHtml(fixture.broadcasters.join(', '))}</span></div>`; }).join('')}</div><p class="source-note">Only UK listings explicitly returned by the fixture provider are shown.</p>` : '<p class="md-empty">No confirmed UK broadcaster details are currently available in the fixture feed.</p>';
-}
-
 function renderFixtures() {
   const list = $('#fixture-list');
-  renderTvListings();
   if (!state.fixtures.length) {
     list.innerHTML = `<div class="empty-state"><h2>Fixtures are not available yet</h2><p>The 2026/27 fixture list will appear here as soon as a configured provider publishes it. No placeholder or invented matches are shown.</p></div>`;
     $('#fixture-count').textContent = 'Awaiting release';
@@ -776,7 +768,7 @@ async function openMatchDetail(row) {
     panel.innerHTML = renderDetail(fixture, fixture.demoDetails.timeline, fixture.demoDetails.stats, fixture.demoDetails.lineups);
     return;
   }
-  panel.innerHTML = '<div class="md-empty">Loading live match detail…</div>';
+  panel.innerHTML = '<div class="loading-dots">Loading live match detail…</div>';
   await refreshMatchDetail(fixture, row, panel);
 }
 
@@ -940,13 +932,6 @@ function updateNewsClubPickerButton() {
 
 function installEvents() {
   $$('.tab-btn').forEach(button => button.addEventListener('click', () => switchTab(button.dataset.tab)));
-  $('#tv-listings-toggle').addEventListener('click', () => {
-    const panel = $('#tv-listings');
-    const open = panel.hidden;
-    panel.hidden = !open;
-    $('#tv-listings-toggle').setAttribute('aria-expanded', String(open));
-    renderTvListings();
-  });
   $('#player-dialog-close').addEventListener('click', () => $('#player-dialog').close());
   $('#player-dialog').addEventListener('click', event => { if (event.target === $('#player-dialog')) $('#player-dialog').close(); });
   $('#player-dialog').addEventListener('close', () => document.body.classList.remove('dialog-open'));

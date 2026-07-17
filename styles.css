@@ -158,6 +158,8 @@ main { margin: 0 auto; max-width: 1300px; padding: 24px 14px 60px; }
 .empty-state { background: var(--surface); border: 1px solid var(--border); border-radius: 6px; padding: 32px 20px; text-align: center; }
 .empty-state h2 { font-size: 20px; margin-bottom: 8px; }
 .empty-state p { color: var(--muted); line-height: 1.5; margin: 0 auto; max-width: 680px; }
+@keyframes spinner-turn { to { transform: rotate(360deg); } }
+.spinner, .loading-dots::before { animation: spinner-turn .75s linear infinite; border: 2px solid currentColor; border-right-color: transparent; border-radius: 50%; box-sizing: border-box; content: ''; display: inline-block; height: 14px; margin-right: 7px; vertical-align: -2px; width: 14px; }
 .loading-dots { background: var(--surface); border: 1px solid var(--border); border-radius: 6px; color: var(--muted); font-weight: 700; padding: 28px; text-align: center; }
 .news-note { color: var(--muted); font-size: 13px; margin: -5px 0 16px; }
 .news-grid { display: flex; flex-direction: column; gap: 6px; }
@@ -199,11 +201,6 @@ main { margin: 0 auto; max-width: 1300px; padding: 24px 14px 60px; }
 .availability-row small { grid-column: 2; }
 .source-note { margin: 7px 0 0; }
 .tv-pill { background: #dff0ff; border: 1px solid #9fc9ea; border-radius: 999px; color: #195f91; font-size: 9px; font-weight: 700; padding: 2px 5px; }
-.tv-listings { background: #fff; border: 1px solid var(--border); border-radius: 5px; margin: 8px 0 12px; padding: 10px; }
-.tv-listing-grid { display: grid; gap: 5px; grid-template-columns: repeat(2, minmax(0, 1fr)); }
-.tv-listing-grid > div { background: var(--faint); border-radius: 4px; display: flex; flex-direction: column; padding: 7px; }
-.tv-listing-grid strong { font-size: 11px; }
-.tv-listing-grid span { color: var(--muted); font-size: 9px; }
 .squad-groups { display: flex; flex-direction: column; gap: 18px; }
 .squad-group h4, .squad-transfer-block h4 { color: var(--ink); font-size: 14px; margin-bottom: 8px; }
 .squad-transfer-block { border-top: 1px solid var(--border); margin-top: 18px; padding-top: 14px; }
@@ -273,7 +270,6 @@ footer a { color: var(--ink); }
   .club-name { font-size: 14px; }
   .health-grid, .club-info-grid, .club-sections, .lineups-grid { grid-template-columns: 1fr; }
   .player-stats { grid-template-columns: repeat(3, 1fr); }
-  .tv-listing-grid { grid-template-columns: 1fr; }
   .availability-row { grid-template-columns: 1fr; }
   .availability-row small { grid-column: 1; }
   .squad-player { grid-template-columns: 28px minmax(0, 1fr) auto; }
