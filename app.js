@@ -283,7 +283,7 @@ function updateFavoriteClubUI() {
   const club = state.favoriteClub && state.clubs.get(state.favoriteClub);
   if (!button) return;
   button.hidden = !club;
-  button.textContent = club ? `★ My Club: ${club.name}` : '';
+  button.textContent = club ? `★ Favourite: ${club.name}` : '';
   button.dataset.club = club ? club.name : '';
 }
 
@@ -523,7 +523,7 @@ function renderClubPage(name) {
   const tableRow = (state.standings.length ? state.standings : calculateStandings()).find(row => teamKey(row.team) === key);
   const squad = state.squads.get(key);
   const transfers = state.transfers.get(key);
-  target.innerHTML = `<div class="club-card"><div class="club-head">${crestHtml(club, true)}<div><div class="club-title">${escapeHtml(club.name)}</div><div class="club-meta">${tableRow ? `${tableRow.rank}${ordinal(tableRow.rank)} · ${tableRow.points} points · ${tableRow.played} played` : `${matches.length} fixtures`}</div></div><button type="button" class="favorite-action${state.favoriteClub === key ? ' active' : ''}" data-favorite-club="${escapeHtml(key)}">${state.favoriteClub === key ? '★ My Club' : '☆ Make My Club'}</button></div>${renderClubInfo(squad)}<div class="club-sections"><div><div class="club-section-title">Upcoming fixtures</div>${upcoming.length ? upcoming.map(fixtureMini).join('') : '<p class="md-empty">No upcoming fixtures available.</p>'}</div><div><div class="club-section-title">Recent results</div>${completed.length ? completed.map(fixtureMini).join('') : '<p class="md-empty">No results yet.</p>'}</div></div><div class="club-transfers"><div class="club-section-title">Confirmed transfers</div>${renderTransfers(transfers)}</div><div class="club-squad"><div class="club-section-title">2026/27 squad</div>${renderSquad(squad, club)}</div></div>`;
+  target.innerHTML = `<div class="club-card"><div class="club-head">${crestHtml(club, true)}<div><div class="club-title">${escapeHtml(club.name)}</div><div class="club-meta">${tableRow ? `${tableRow.rank}${ordinal(tableRow.rank)} · ${tableRow.points} points · ${tableRow.played} played` : `${matches.length} fixtures`}</div></div><button type="button" class="favorite-action${state.favoriteClub === key ? ' active' : ''}" data-favorite-club="${escapeHtml(key)}">${state.favoriteClub === key ? '★ Favourite club' : '☆ Set as favourite'}</button></div>${renderClubInfo(squad)}<div class="club-sections"><div><div class="club-section-title">Upcoming fixtures</div>${upcoming.length ? upcoming.map(fixtureMini).join('') : '<p class="md-empty">No upcoming fixtures available.</p>'}</div><div><div class="club-section-title">Recent results</div>${completed.length ? completed.map(fixtureMini).join('') : '<p class="md-empty">No results yet.</p>'}</div></div><div class="club-transfers"><div class="club-section-title">Confirmed transfers</div>${renderTransfers(transfers)}</div><div class="club-squad"><div class="club-section-title">2026/27 squad</div>${renderSquad(squad, club)}</div></div>`;
   loadClubSquad(key, club);
   loadClubTransfers(key, club);
 }
@@ -547,7 +547,7 @@ function updateNextMatch() {
   }
   const parts = dateParts(next.kickoff);
   const countdown = live ? statusLabel(next) : countdownText(fixtureTime(next) - now);
-  const label = live ? 'Live now' : state.favoriteClub && favoriteFixtures.length ? 'My Club next' : 'Next match';
+  const label = live ? 'Live now' : state.favoriteClub && favoriteFixtures.length ? 'Favourite club next' : 'Next match';
   target.innerHTML = `<strong>${label}</strong><span>${escapeHtml(next.home.name)} v ${escapeHtml(next.away.name)}</span><span class="nm-muted">${escapeHtml(parts.date)} ${escapeHtml(parts.time)} ${escapeHtml(parts.zone)}</span><span class="nm-count">${escapeHtml(countdown)}</span>`;
 }
 
