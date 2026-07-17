@@ -189,10 +189,13 @@ footer a { color: var(--ink); }
   .team-picker { position: static; }
   .team-picker-panel { bottom: 64px; left: 10px; max-height: 58vh; position: fixed; right: 10px; top: auto; width: auto; }
   .team-picker-grid { grid-template-columns: 1fr; }
-  .match-row { grid-template-areas: 'when when' 'teams teams' 'venue venue'; grid-template-columns: 1fr auto; row-gap: 8px; }
+  .match-row { grid-template-areas: 'teams teams' 'when venue'; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); row-gap: 10px; }
   .row-teams { grid-area: teams; }
-  .row-when { grid-area: when; }
-  .row-venue { grid-area: venue; text-align: left; }
+  .row-when { grid-area: when; text-align: left; }
+  .row-match-status { justify-content: flex-start; }
+  .row-venue { align-self: end; grid-area: venue; text-align: right; }
+  .row-date { font-size: 11px; }
+  .row-time { font-size: 16px; }
   .club-name { font-size: 14px; }
   .club-sections, .lineups-grid { grid-template-columns: 1fr; }
   .squad-player { grid-template-columns: 28px minmax(0, 1fr) auto; }
