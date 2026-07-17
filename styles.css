@@ -207,7 +207,9 @@ main { margin: 0 auto; max-width: 1300px; padding: 24px 14px 60px; }
 .transfer-row { cursor: default; }
 .transfer-symbol { font-size: 15px; }
 .transfer-player-link { background: transparent; border: 0; color: var(--ink); cursor: pointer; font: inherit; font-weight: 700; overflow: hidden; padding: 0; text-align: left; text-decoration: underline; text-decoration-color: #b8bdc3; text-overflow: ellipsis; white-space: nowrap; }
-.transfer-row a { color: var(--ink); font-size: 10px; white-space: nowrap; }
+.transfer-type { border-radius: 999px; font-size: 9px; font-weight: 700; justify-self: start; padding: 3px 7px; text-align: center; text-transform: uppercase; }
+.transfer-type.transfer-in, .transfer-type.loan-in, .transfer-type.loan-recall { background: #dff6ee; color: #08735d; }
+.transfer-type.transfer-out, .transfer-type.loan-out, .transfer-type.player-released, .transfer-type.end-of-loan { background: #f7e4e2; color: #a62c25; }
 .squad-grid { display: flex; flex-direction: column; gap: 3px; }
 .squad-player { align-items: center; background: var(--faint); border: 1px solid var(--border); border-radius: 4px; color: inherit; cursor: pointer; display: grid; font-family: inherit; font-size: 13px; gap: 10px; grid-template-columns: 34px minmax(0, 1fr) minmax(150px, 220px) 120px; padding: 7px 10px; text-align: left; width: 100%; }
 .squad-player:hover { background: #fff; border-color: #8e969f; }

@@ -516,6 +516,7 @@ async function openPlayerProfile(id, clubName) {
   const dialog = $('#player-dialog');
   const target = $('#player-profile');
   dialog.showModal();
+  history.pushState({ ...(history.state || {}), playerDialog: true }, '', location.href);
   document.body.classList.add('dialog-open');
   target.innerHTML = '<div class="loading-dots">Loading player</div>';
   try {
@@ -542,7 +543,7 @@ function transferLabel(type) {
 function renderTransfers(data) {
   if (!data) return '<div class="loading-dots">Loading confirmed transfers</div>';
   if (!data.length) return '<p class="md-empty">No confirmed transfers are currently listed.</p>';
-  return `<div class="squad-grid transfer-list">${data.map(item => `<article class="squad-player transfer-row"><span class="squad-shirt transfer-symbol">${['transfer-in', 'loan-in', 'loan-recall'].includes(item.type) ? '←' : '→'}</span>${item.playerId ? `<button type="button" class="transfer-player-link" data-player-id="${escapeHtml(item.playerId)}" data-player-club="${escapeHtml(item.club)}">${escapeHtml(item.player)}</button>` : `<strong>${escapeHtml(item.player)}</strong>`}<span class="squad-role">${escapeHtml(transferLabel(item.type))}</span><span class="squad-nationality">${escapeHtml(item.detail || '')}${item.link ? ` <a href="${escapeHtml(item.link)}" target="_blank" rel="noopener noreferrer">Official details</a>` : ''}</span></article>`).join('')}</div>`;
+  return `<div class="squad-grid transfer-list">${data.map(item => `<article class="squad-player transfer-row"><span class="squad-shirt transfer-symbol">${['transfer-in', 'loan-in', 'loan-recall'].includes(item.type) ? '←' : '→'}</span>${item.playerId ? `<button type="button" class="transfer-player-link" data-player-id="${escapeHtml(item.playerId)}" data-player-club="${escapeHtml(item.club)}">${escapeHtml(item.player)}</button>` : `<strong>${escapeHtml(item.player)}</strong>`}<span class="squad-role transfer-type ${escapeHtml(item.type)}">${escapeHtml(transferLabel(item.type))}</span><span class="squad-nationality">${escapeHtml(item.detail || '')}</span></article>`).join('')}</div>`;
 }
 
 async function loadClubTransfers(key, club) {
@@ -894,6 +895,13 @@ function openClub(name, updateHash = true) {
   $('#tab-club')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
+function dismissPlayerProfile() {
+  const dialog = $('#player-dialog');
+  if (!dialog.open) return;
+  if (history.state?.playerDialog) history.back();
+  else dialog.close();
+}
+
 function openHashClub() {
   const match = location.hash.match(/^#club=(.+)$/);
   if (!match) return false;
@@ -932,8 +940,9 @@ function updateNewsClubPickerButton() {
 
 function installEvents() {
   $$('.tab-btn').forEach(button => button.addEventListener('click', () => switchTab(button.dataset.tab)));
-  $('#player-dialog-close').addEventListener('click', () => $('#player-dialog').close());
-  $('#player-dialog').addEventListener('click', event => { if (event.target === $('#player-dialog')) $('#player-dialog').close(); });
+  $('#player-dialog-close').addEventListener('click', dismissPlayerProfile);
+  $('#player-dialog').addEventListener('click', event => { if (event.target === $('#player-dialog')) dismissPlayerProfile(); });
+  $('#player-dialog').addEventListener('cancel', event => { event.preventDefault(); dismissPlayerProfile(); });
   $('#player-dialog').addEventListener('close', () => document.body.classList.remove('dialog-open'));
   $('#data-health-toggle').addEventListener('click', () => {
     const panel = $('#data-health-panel');
@@ -1050,7 +1059,10 @@ function installEvents() {
     if (row) openMatchDetail(row);
   });
   window.addEventListener('hashchange', openHashClub);
-  window.addEventListener('popstate', openHashClub);
+  window.addEventListener('popstate', event => {
+    if ($('#player-dialog').open && !event.state?.playerDialog) $('#player-dialog').close();
+    openHashClub();
+  });
   $('#jump-next').addEventListener('click', () => {
     const fixture = state.fixtures.find(isLive) || state.fixtures.find(item => !isFinal(item) && !isPostponed(item) && fixtureTime(item) > Date.now());
     if (fixture) $(`.match-row[data-id="${CSS.escape(fixture.id)}"]`)?.scrollIntoView({ behavior: 'smooth', block: 'center' });
