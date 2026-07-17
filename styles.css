@@ -24,7 +24,7 @@ button, input { font: inherit; }
 .header-logo { flex: 0 0 auto; height: 58px; object-fit: contain; width: auto; }
 .site-header h1 { color: #fff; font-size: clamp(21px, 4vw, 30px); font-weight: 600; letter-spacing: -.4px; }
 .site-header h1 strong { color: #b8bcc2; }
-.site-header p { color: #9a9fa6; font-size: 13px; margin-top: 6px; }
+.site-header p { align-items: center; color: #9a9fa6; display: flex; font-size: 13px; gap: 8px; margin-top: 6px; }
 .next-match { align-items: center; background: rgba(255,255,255,.03); border: 1px solid #3a3e44; border-radius: 8px; color: #d7dbe0; display: inline-flex; flex-wrap: wrap; font-size: 13px; gap: 8px; margin-top: 10px; padding: 7px 11px; }
 .next-match strong { color: #fff; }
 .nm-muted { color: #9a9fa6; }
@@ -36,7 +36,7 @@ button, input { font: inherit; }
 .status-row { align-items: center; display: flex; flex-wrap: wrap; gap: 8px; }
 .data-health-toggle, .favorite-club-link { background: transparent; border: 1px solid #3a3e44; border-radius: 20px; color: #b8bcc2; cursor: pointer; font-size: 11px; margin-top: 10px; padding: 4px 10px; }
 .data-health-toggle:hover, .favorite-club-link:hover { border-color: #7d858e; color: #fff; }
-.favorite-club-link { color: #ffcc4d; margin-top: 5px; }
+.favorite-club-link { color: #ffcc4d; margin-top: 0; white-space: nowrap; }
 .data-health-panel { background: #25292e; border: 1px solid #3a3e44; border-radius: 6px; color: #d7dbe0; margin-top: 8px; max-width: 900px; padding: 10px; }
 .health-grid { display: grid; gap: 10px; grid-template-columns: repeat(3, minmax(0, 1fr)); }
 .health-grid > div { display: grid; gap: 2px; grid-template-columns: auto 1fr; }
