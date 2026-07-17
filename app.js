@@ -28,7 +28,7 @@ const state = {
   selectedClubs: new Set(),
   newsFilterClubs: false,
   newsSelectedClubs: new Set(),
-  europeOnly: false,
+  includeEurope: true,
   hideCompleted: false,
   revealed: new Set(),
   detailTimers: new Map(),
@@ -46,7 +46,7 @@ function loadPreferences() {
     const prefs = JSON.parse(localStorage.getItem(PREF_KEY) || '{}');
     state.filterClubs = !!prefs.filterClubs;
     state.newsFilterClubs = !!prefs.newsFilterClubs;
-    state.europeOnly = !!prefs.europeOnly;
+    state.includeEurope = prefs.includeEurope !== false;
     state.hideCompleted = !!prefs.hideCompleted;
     state.selectedClubs = new Set(Array.isArray(prefs.selectedClubs) ? prefs.selectedClubs : []);
     state.newsSelectedClubs = new Set(Array.isArray(prefs.newsSelectedClubs) ? prefs.newsSelectedClubs : []);
@@ -59,7 +59,7 @@ function savePreferences() {
     localStorage.setItem(PREF_KEY, JSON.stringify({
       filterClubs: state.filterClubs,
       newsFilterClubs: state.newsFilterClubs,
-      europeOnly: state.europeOnly,
+      includeEurope: state.includeEurope,
       hideCompleted: state.hideCompleted,
       selectedClubs: [...state.selectedClubs],
       newsSelectedClubs: [...state.newsSelectedClubs],
@@ -337,7 +337,7 @@ function renderFixture(fixture) {
 
 function visibleFixtures() {
   return state.fixtures.filter(fixture => {
-    if (state.europeOnly && !fixture.isEuropean) return false;
+    if (!state.includeEurope && fixture.isEuropean) return false;
     if (state.hideCompleted && isFinal(fixture)) return false;
     if (state.filterClubs && state.selectedClubs.size) {
       return state.selectedClubs.has(teamKey(fixture.home.name)) || state.selectedClubs.has(teamKey(fixture.away.name));
@@ -369,7 +369,7 @@ function renderFixtures() {
   list.innerHTML = html || '<div class="empty-state"><h2>No fixtures match these filters</h2><p>Clear a club filter or show completed matches.</p></div>';
   const labels = [];
   if (state.filterClubs && state.selectedClubs.size) labels.push(`${state.selectedClubs.size} clubs`);
-  if (state.europeOnly) labels.push('Europe');
+  if (!state.includeEurope) labels.push('league only');
   if (state.hideCompleted) labels.push('upcoming');
   $('#fixture-count').textContent = labels.length ? `${fixtures.length} · ${labels.join(' + ')}` : `${state.fixtures.length} · kick-off order`;
   updateNextMatch();
@@ -512,11 +512,7 @@ function updateEuropeFilter() {
   input.disabled = count === 0;
   label.classList.toggle('disabled', count === 0);
   label.title = count ? `${count} published European fixture${count === 1 ? '' : 's'} involving Premier League clubs` : 'European fixtures have not been published for Premier League clubs yet';
-  if (!count && state.europeOnly) {
-    state.europeOnly = false;
-    input.checked = false;
-    savePreferences();
-  }
+  input.checked = state.includeEurope;
 }
 
 function updateSummary() {
@@ -799,7 +795,7 @@ function installEvents() {
     savePreferences();
   });
   $('#filter-europe').addEventListener('change', event => {
-    state.europeOnly = event.target.checked;
+    state.includeEurope = event.target.checked;
     renderFixtures();
     savePreferences();
   });
@@ -900,7 +896,7 @@ async function initialise() {
   installEvents();
   $('#filter-clubs').checked = state.filterClubs;
   $('#news-filter-clubs').checked = state.newsFilterClubs;
-  $('#filter-europe').checked = state.europeOnly;
+  $('#filter-europe').checked = state.includeEurope;
   $('#filter-completed').checked = state.hideCompleted;
 
   try {
