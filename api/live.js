@@ -387,9 +387,13 @@ async function detail(rawId) {
 async function squad(teamId) {
   if (!teamId) return { players: [] };
   const query = `comp=${COMPETITION_ID}&compSeasons=${SEASON_ID}&teams=${encodeURIComponent(teamId)}&page=0&pageSize=100&altIds=true`;
-  const [data, requestedTeam] = await Promise.all([
+  const [data, requestedTeam, currentOfficials, priorPremierOfficials, priorChampionshipOfficials, clubData] = await Promise.all([
     pulse(`/players?${query}`),
-    pulse(`/teams/${encodeURIComponent(teamId)}`)
+    pulse(`/teams/${encodeURIComponent(teamId)}`),
+    pulse(`/teamofficials?comp=1&compSeasons=841&teams=${encodeURIComponent(teamId)}&page=0&pageSize=100&altIds=true`).catch(() => ({ content: [] })),
+    pulse(`/teamofficials?comp=1&compSeasons=777&teams=${encodeURIComponent(teamId)}&page=0&pageSize=100&altIds=true`).catch(() => ({ content: [] })),
+    pulse(`/teamofficials?comp=12&compSeasons=778&teams=${encodeURIComponent(teamId)}&page=0&pageSize=100&altIds=true`).catch(() => ({ content: [] })),
+    pulse(`/clubs/${encodeURIComponent(teamId)}`).catch(() => ({}))
   ]);
   const requestedName = String(requestedTeam.name || '').toLowerCase();
   const seen = new Set();
@@ -411,7 +415,32 @@ async function squad(teamId) {
     nationality: player.nationalTeam && player.nationalTeam.country || '',
     age: player.age || ''
   }));
-  return { provider: 'Premier League', players };
+  const officials = [currentOfficials, priorPremierOfficials, priorChampionshipOfficials]
+    .map(result => result.content || [])
+    .find(entries => entries.length) || [];
+  const managerEntry = [...officials].reverse().find(official => ['manager', 'head coach'].includes(String(official.role || '').toLowerCase()));
+  const roleSeen = new Set();
+  const staff = [];
+  if (managerEntry) {
+    staff.push({ id: managerEntry.id, name: managerEntry.name && managerEntry.name.display || '', role: managerEntry.role, nationality: managerEntry.birth && managerEntry.birth.country && managerEntry.birth.country.country || '' });
+    roleSeen.add(String(managerEntry.role).toLowerCase());
+  }
+  for (const official of [...officials].reverse()) {
+    const role = String(official.role || 'Staff');
+    const roleKey = role.toLowerCase();
+    if (!official.name || !official.name.display || roleSeen.has(roleKey) || roleKey === 'manager' || roleKey === 'head coach') continue;
+    roleSeen.add(roleKey);
+    staff.push({ id: official.id, name: official.name.display, role, nationality: official.birth && official.birth.country && official.birth.country.country || '' });
+    if (staff.length >= 6) break;
+  }
+  const ground = requestedTeam.grounds && requestedTeam.grounds[0] || {};
+  const club = {
+    founded: clubData.founded || '',
+    city: clubData.city || ground.city || '',
+    stadium: ground.name || '',
+    capacity: ground.capacity || ''
+  };
+  return { provider: 'Premier League', players, staff, club };
 }
 
 async function lineup(rawId) {
