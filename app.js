@@ -28,6 +28,7 @@ const state = {
   selectedClubs: new Set(),
   newsFilterClubs: false,
   newsSelectedClubs: new Set(),
+  europeOnly: false,
   hideCompleted: false,
   revealed: new Set(),
   detailTimers: new Map(),
@@ -45,6 +46,7 @@ function loadPreferences() {
     const prefs = JSON.parse(localStorage.getItem(PREF_KEY) || '{}');
     state.filterClubs = !!prefs.filterClubs;
     state.newsFilterClubs = !!prefs.newsFilterClubs;
+    state.europeOnly = !!prefs.europeOnly;
     state.hideCompleted = !!prefs.hideCompleted;
     state.selectedClubs = new Set(Array.isArray(prefs.selectedClubs) ? prefs.selectedClubs : []);
     state.newsSelectedClubs = new Set(Array.isArray(prefs.newsSelectedClubs) ? prefs.newsSelectedClubs : []);
@@ -57,6 +59,7 @@ function savePreferences() {
     localStorage.setItem(PREF_KEY, JSON.stringify({
       filterClubs: state.filterClubs,
       newsFilterClubs: state.newsFilterClubs,
+      europeOnly: state.europeOnly,
       hideCompleted: state.hideCompleted,
       selectedClubs: [...state.selectedClubs],
       newsSelectedClubs: [...state.newsSelectedClubs],
@@ -88,7 +91,19 @@ function teamKey(value) {
     .replace(/[\u0300-\u036f]/g, '')
     .toLowerCase()
     .replace(/[^a-z0-9]/g, '')
-    .replace(/^afcbournemouth$/, 'bournemouth');
+    .replace(/^afcbournemouth$/, 'bournemouth')
+    .replace(/^manunited$/, 'manchesterunited')
+    .replace(/^manutd$/, 'manchesterunited')
+    .replace(/^mancity$/, 'manchestercity')
+    .replace(/^tottenham$/, 'tottenhamhotspur')
+    .replace(/^spurs$/, 'tottenhamhotspur')
+    .replace(/^nottmforest$/, 'nottinghamforest')
+    .replace(/^newcastle$/, 'newcastleunited')
+    .replace(/^brighton$/, 'brightonhovealbion')
+    .replace(/^ipswich$/, 'ipswichtown')
+    .replace(/^leeds$/, 'leedsunited')
+    .replace(/^hull$/, 'hullcity')
+    .replace(/^coventry$/, 'coventrycity');
 }
 
 function pairKey(home, away) {
@@ -123,6 +138,9 @@ function normaliseFixture(event, source) {
     id: String(event.idEvent || `${pairKey(event.strHomeTeam, event.strAwayTeam)}:${timestamp}`),
     providerFixtureId: event.providerFixtureId || null,
     source: event.strSource || source,
+    isEuropean: !!event.isEuropean,
+    competition: event.strCompetition || COMPETITION.name,
+    competitionCode: event.strCompetitionCode || 'PL',
     kickoff: timestamp,
     round,
     matchweek: roundNumber(round),
@@ -157,6 +175,17 @@ async function loadOfficialFixtures() {
   const fixtures = (data.events || []).map(event => normaliseFixture(event, data.provider || 'football-feed'));
   if (isCompleteFixtureList(fixtures)) return { fixtures, source: data.provider || 'Premier League feed' };
   throw new Error(`Fixture provider returned ${fixtures.length} of ${COMPETITION.expectedFixtures} fixtures`);
+}
+
+async function loadEuropeanFixtures() {
+  try {
+    const data = await fetchJSON('/api/europe?type=fixtures');
+    return (data.events || [])
+      .map(event => normaliseFixture(event, 'uefa'))
+      .filter(fixture => state.clubs.has(teamKey(fixture.home.name)) || state.clubs.has(teamKey(fixture.away.name)));
+  } catch (_) {
+    return [];
+  }
 }
 
 async function loadStandings() {
@@ -224,6 +253,7 @@ function applyLiveDemo() {
 function registerClubs() {
   state.clubs = new Map();
   for (const fixture of state.fixtures) {
+    if (fixture.isEuropean) continue;
     for (const club of [fixture.home, fixture.away]) {
       const key = teamKey(club.name);
       const current = state.clubs.get(key) || {};
@@ -274,6 +304,7 @@ function clubUrl(name) {
 }
 
 function clubLink(club) {
+  if (!state.clubs.has(teamKey(club.name))) return `<span class="club-name">${escapeHtml(club.name)}</span>`;
   return `<a class="club-name" href="${clubUrl(club.name)}" data-club="${escapeHtml(club.name)}">${escapeHtml(club.name)}</a>`;
 }
 
@@ -285,13 +316,14 @@ function renderFixture(fixture) {
   const hiddenScore = final && hasScore(fixture) && !state.revealed.has(fixture.id);
   const lineup = state.lineups.get(fixture.id);
   const hasLineups = !!(lineup && lineup.confirmed);
-  const classes = ['match-row', final ? 'finished' : '', live ? 'is-live' : '', hasLineups ? 'has-lineups' : '', isPostponed(fixture) ? 'postponed' : ''].filter(Boolean).join(' ');
+  const classes = ['match-row', fixture.isEuropean ? 'european' : '', final ? 'finished' : '', live ? 'is-live' : '', hasLineups ? 'has-lineups' : '', isPostponed(fixture) ? 'postponed' : ''].filter(Boolean).join(' ');
   const venue = [fixture.venue, fixture.city].filter(Boolean).join(', ') || 'Venue TBC';
   const scoreStatus = live
     ? `<span class="live-pill">${escapeHtml(statusLabel(fixture))}</span>`
     : statusLabel(fixture) ? `<span class="row-status">${escapeHtml(statusLabel(fixture))}</span>` : '';
+  const competitionStatus = fixture.isEuropean ? `<span class="europe-pill" title="${escapeHtml(fixture.competition)}">${escapeHtml(fixture.competitionCode)}</span>` : '';
   const lineupStatus = hasLineups ? '<button type="button" class="lineup-pill">Line-ups</button>' : '';
-  const matchStatus = `${scoreStatus}${lineupStatus}${live || hasLineups ? '<span class="detail-caret">▾</span>' : ''}`;
+  const matchStatus = `${competitionStatus}${scoreStatus}${lineupStatus}${live || hasLineups ? '<span class="detail-caret">▾</span>' : ''}`;
   return `<div class="${classes}" data-id="${escapeHtml(fixture.id)}">
     <div class="row-teams">
       <span class="row-team home">${clubLink(fixture.home)}${crestHtml(fixture.home)}</span>
@@ -305,6 +337,7 @@ function renderFixture(fixture) {
 
 function visibleFixtures() {
   return state.fixtures.filter(fixture => {
+    if (state.europeOnly && !fixture.isEuropean) return false;
     if (state.hideCompleted && isFinal(fixture)) return false;
     if (state.filterClubs && state.selectedClubs.size) {
       return state.selectedClubs.has(teamKey(fixture.home.name)) || state.selectedClubs.has(teamKey(fixture.away.name));
@@ -336,6 +369,7 @@ function renderFixtures() {
   list.innerHTML = html || '<div class="empty-state"><h2>No fixtures match these filters</h2><p>Clear a club filter or show completed matches.</p></div>';
   const labels = [];
   if (state.filterClubs && state.selectedClubs.size) labels.push(`${state.selectedClubs.size} clubs`);
+  if (state.europeOnly) labels.push('Europe');
   if (state.hideCompleted) labels.push('upcoming');
   $('#fixture-count').textContent = labels.length ? `${fixtures.length} · ${labels.join(' + ')}` : `${state.fixtures.length} · kick-off order`;
   updateNextMatch();
@@ -349,6 +383,7 @@ function calculateStandings() {
     return table.get(key);
   };
   state.fixtures.forEach(fixture => {
+    if (fixture.isEuropean) return;
     const home = ensure(fixture.home);
     const away = ensure(fixture.away);
     if (!isFinal(fixture) || !hasScore(fixture)) return;
@@ -382,7 +417,7 @@ function renderTable() {
 function fixtureMini(fixture) {
   const parts = dateParts(fixture.kickoff);
   const score = hasScore(fixture) ? `${fixture.homeScore} – ${fixture.awayScore}` : 'v';
-  return `<div class="club-fixture${isFinal(fixture) ? ' finished' : ''}${isLive(fixture) ? ' live' : ''}"><div class="cf-meta"><span>${escapeHtml(fixture.venue || '')}</span><span>${escapeHtml(isLive(fixture) || isFinal(fixture) ? statusLabel(fixture) : `${parts.date} · ${parts.time} ${parts.zone}`)}</span></div><div class="cf-teams">${escapeHtml(fixture.home.name)} <span class="vs${hasScore(fixture) ? ' score' : ''}">${score}</span> ${escapeHtml(fixture.away.name)}</div></div>`;
+  return `<div class="club-fixture${fixture.isEuropean ? ' european' : ''}${isFinal(fixture) ? ' finished' : ''}${isLive(fixture) ? ' live' : ''}"><div class="cf-meta"><span>${fixture.isEuropean ? `<strong>${escapeHtml(fixture.competitionCode)}</strong> · ` : ''}${escapeHtml(fixture.venue || '')}</span><span>${escapeHtml(isLive(fixture) || isFinal(fixture) ? statusLabel(fixture) : `${parts.date} · ${parts.time} ${parts.zone}`)}</span></div><div class="cf-teams">${escapeHtml(fixture.home.name)} <span class="vs${hasScore(fixture) ? ' score' : ''}">${score}</span> ${escapeHtml(fixture.away.name)}</div></div>`;
 }
 
 const POSITION_GROUPS = [
@@ -470,12 +505,28 @@ function setFeedStatus(className, text) {
   target.textContent = text;
 }
 
+function updateEuropeFilter() {
+  const count = state.fixtures.filter(fixture => fixture.isEuropean).length;
+  const input = $('#filter-europe');
+  const label = $('#europe-filter-label');
+  input.disabled = count === 0;
+  label.classList.toggle('disabled', count === 0);
+  label.title = count ? `${count} published European fixture${count === 1 ? '' : 's'} involving Premier League clubs` : 'European fixtures have not been published for Premier League clubs yet';
+  if (!count && state.europeOnly) {
+    state.europeOnly = false;
+    input.checked = false;
+    savePreferences();
+  }
+}
+
 function updateSummary() {
   const clubs = state.clubs.size;
-  const complete = state.fixtures.length === COMPETITION.expectedFixtures;
-  $('#season-summary').textContent = state.fixtures.length
-    ? `${state.fixtures.length} fixtures${clubs ? ` · ${clubs} clubs` : ''}${complete ? '' : ' currently published'}`
+  const leagueCount = state.fixtures.filter(fixture => !fixture.isEuropean).length;
+  const europeCount = state.fixtures.filter(fixture => fixture.isEuropean).length;
+  $('#season-summary').textContent = leagueCount
+    ? `${leagueCount} league fixtures${europeCount ? ` · ${europeCount} European fixtures` : ''}${clubs ? ` · ${clubs} clubs` : ''}`
     : 'Official fixtures have not been published by the configured feeds';
+  updateEuropeFilter();
 }
 
 function mergeEvents(events, source) {
@@ -499,8 +550,13 @@ function mergeEvents(events, source) {
 }
 
 async function loadLiveEvents() {
-  const data = await fetchJSON('/api/live?type=feed');
-  return { events: data.events || [], source: data.provider || 'football-feed' };
+  const results = await Promise.allSettled([
+    fetchJSON('/api/live?type=feed'),
+    fetchJSON('/api/europe?type=feed')
+  ]);
+  const events = results.flatMap(result => result.status === 'fulfilled' ? (result.value.events || []) : []);
+  if (!events.length && results.every(result => result.status === 'rejected')) throw new Error('All live feeds unavailable');
+  return { events, source: 'live-football-feeds' };
 }
 
 function nearbyLineupFixtures() {
@@ -515,11 +571,16 @@ async function refreshNearbyLineups() {
   const fixtures = nearbyLineupFixtures();
   if (!fixtures.length) return false;
   try {
-    const ids = fixtures.map(fixture => fixture.providerFixtureId).join(',');
-    const data = await fetchJSON(`/api/live?type=lineups&ids=${encodeURIComponent(ids)}`);
+    const premierIds = fixtures.filter(fixture => !fixture.isEuropean).map(fixture => fixture.providerFixtureId);
+    const europeanIds = fixtures.filter(fixture => fixture.isEuropean).map(fixture => fixture.providerFixtureId);
+    const requests = [];
+    if (premierIds.length) requests.push(fetchJSON(`/api/live?type=lineups&ids=${encodeURIComponent(premierIds.join(','))}`));
+    if (europeanIds.length) requests.push(fetchJSON(`/api/europe?type=lineups&ids=${encodeURIComponent(europeanIds.join(','))}`));
+    const responses = await Promise.allSettled(requests);
+    const lineupsById = Object.assign({}, ...responses.filter(result => result.status === 'fulfilled').map(result => result.value.lineupsById || {}));
     let changed = false;
     fixtures.forEach(fixture => {
-      const incoming = data.lineupsById && data.lineupsById[fixture.providerFixtureId];
+      const incoming = lineupsById[fixture.providerFixtureId];
       if (!incoming) return;
       const current = state.lineups.get(fixture.id);
       if (JSON.stringify(current || null) !== JSON.stringify(incoming)) {
@@ -584,7 +645,8 @@ async function refreshMatchDetail(fixture, row, panel) {
   try {
     let data;
     if (!fixture.providerFixtureId) throw new Error('No detail provider available');
-    data = await fetchJSON(`/api/live?type=detail&id=${encodeURIComponent(fixture.providerFixtureId)}`);
+    const endpoint = fixture.isEuropean ? '/api/europe' : '/api/live';
+    data = await fetchJSON(`${endpoint}?type=detail&id=${encodeURIComponent(fixture.providerFixtureId)}`);
     if (data.events && data.events.length) mergeEvents(data.events, fixture.source);
     if (data.lineups) state.lineups.set(fixture.id, data.lineups);
     panel.innerHTML = renderDetail(fixture, data.timeline || [], data.eventstats || [], data.lineups || state.lineups.get(fixture.id));
@@ -736,6 +798,11 @@ function installEvents() {
     renderFixtures();
     savePreferences();
   });
+  $('#filter-europe').addEventListener('change', event => {
+    state.europeOnly = event.target.checked;
+    renderFixtures();
+    savePreferences();
+  });
   $('#filter-completed').addEventListener('change', event => {
     state.hideCompleted = event.target.checked;
     renderFixtures();
@@ -833,6 +900,7 @@ async function initialise() {
   installEvents();
   $('#filter-clubs').checked = state.filterClubs;
   $('#news-filter-clubs').checked = state.newsFilterClubs;
+  $('#filter-europe').checked = state.europeOnly;
   $('#filter-completed').checked = state.hideCompleted;
 
   try {
@@ -842,6 +910,9 @@ async function initialise() {
     if (DEMO_LIVE) applyLiveDemo();
     await loadStandings();
     registerClubs();
+    const europeanFixtures = await loadEuropeanFixtures();
+    state.fixtures.push(...europeanFixtures);
+    state.fixtures.sort((a, b) => fixtureTime(a) - fixtureTime(b));
     renderClubPicker();
     renderNewsClubPicker();
     renderFixtures();
