@@ -77,8 +77,8 @@ function dateParts(iso) {
   const date = new Date(iso);
   if (Number.isNaN(date.getTime())) return { day: 'Date TBC', date: '', time: '--:--', zone: '' };
   const zone = effectiveTimeZone();
-  const day = new Intl.DateTimeFormat('en-GB', { timeZone: zone, weekday: 'long', day: 'numeric', month: 'long' }).format(date);
-  const shortDate = new Intl.DateTimeFormat('en-GB', { timeZone: zone, weekday: 'short', day: 'numeric', month: 'short' }).format(date);
+  const day = new Intl.DateTimeFormat('en-GB', { timeZone: zone, weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }).format(date);
+  const shortDate = new Intl.DateTimeFormat('en-GB', { timeZone: zone, weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' }).format(date);
   const time = new Intl.DateTimeFormat('en-GB', { timeZone: zone, hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }).format(date);
   const zoneName = new Intl.DateTimeFormat('en-GB', { timeZone: zone, timeZoneName: 'short' })
     .formatToParts(date).find(part => part.type === 'timeZoneName')?.value || '';
@@ -684,7 +684,7 @@ function selectedNewsClubs() {
 function newsDate(value) {
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return '';
-  return new Intl.DateTimeFormat('en-GB', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }).format(date);
+  return new Intl.DateTimeFormat('en-GB', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }).format(date);
 }
 
 function renderNews() {
@@ -885,7 +885,7 @@ function installEvents() {
     if (fixture) $(`.match-row[data-id="${CSS.escape(fixture.id)}"]`)?.scrollIntoView({ behavior: 'smooth', block: 'center' });
   });
   $('#jump-today').addEventListener('click', () => {
-    const today = new Intl.DateTimeFormat('en-GB', { timeZone: effectiveTimeZone(), weekday: 'long', day: 'numeric', month: 'long' }).format(new Date());
+    const today = new Intl.DateTimeFormat('en-GB', { timeZone: effectiveTimeZone(), weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }).format(new Date());
     $$('.day-divider').find(divider => divider.textContent === today)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   });
   $('#jump-filters').addEventListener('click', () => $('#tab-fixtures .round-label').scrollIntoView({ behavior: 'smooth', block: 'start' }));
