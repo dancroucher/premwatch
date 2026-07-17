@@ -524,6 +524,7 @@ async function openPlayerProfile(id, clubName) {
   const dialog = $('#player-dialog');
   const target = $('#player-profile');
   dialog.showModal();
+  document.body.classList.add('dialog-open');
   target.innerHTML = '<div class="loading-dots">Loading player</div>';
   try {
     let data = state.playerProfiles.get(String(id));
@@ -549,7 +550,7 @@ function transferLabel(type) {
 function renderTransfers(data) {
   if (!data) return '<div class="loading-dots">Loading confirmed transfers</div>';
   if (!data.length) return '<p class="md-empty">No confirmed transfers are currently listed.</p>';
-  return `<div class="transfer-list">${data.map(item => `<article class="transfer-row"><span class="transfer-type ${escapeHtml(item.type)}">${escapeHtml(transferLabel(item.type))}</span><div><strong>${escapeHtml(item.player)}</strong>${item.detail ? `<span>${escapeHtml(item.detail)}</span>` : ''}</div>${item.link ? `<a href="${escapeHtml(item.link)}" target="_blank" rel="noopener noreferrer">Official details</a>` : ''}</article>`).join('')}</div>`;
+  return `<div class="squad-grid transfer-list">${data.map(item => `<article class="squad-player transfer-row"><span class="squad-shirt transfer-symbol">${['transfer-in', 'loan-in', 'loan-recall'].includes(item.type) ? '←' : '→'}</span>${item.playerId ? `<button type="button" class="transfer-player-link" data-player-id="${escapeHtml(item.playerId)}" data-player-club="${escapeHtml(item.club)}">${escapeHtml(item.player)}</button>` : `<strong>${escapeHtml(item.player)}</strong>`}<span class="squad-role">${escapeHtml(transferLabel(item.type))}</span><span class="squad-nationality">${escapeHtml(item.detail || '')}${item.link ? ` <a href="${escapeHtml(item.link)}" target="_blank" rel="noopener noreferrer">Official details</a>` : ''}</span></article>`).join('')}</div>`;
 }
 
 async function loadClubTransfers(key, club) {
@@ -582,7 +583,7 @@ function renderClubPage(name) {
   const squad = state.squads.get(key);
   const transfers = state.transfers.get(key);
   const availability = state.availability.get(key);
-  target.innerHTML = `<div class="club-card"><div class="club-head">${crestHtml(club, true)}<div><div class="club-title">${escapeHtml(club.name)}</div><div class="club-meta">${tableRow ? `${tableRow.rank}${ordinal(tableRow.rank)} · ${tableRow.points} points · ${tableRow.played} played` : `${matches.length} fixtures`}</div></div><button type="button" class="favorite-action${state.favoriteClub === key ? ' active' : ''}" data-favorite-club="${escapeHtml(key)}">${state.favoriteClub === key ? '★ Favourite club' : '☆ Set as favourite'}</button></div>${renderClubInfo(squad)}<div class="club-sections"><div><div class="club-section-title">Upcoming fixtures</div>${upcoming.length ? upcoming.map(fixtureMini).join('') : '<p class="md-empty">No upcoming fixtures available.</p>'}</div><div><div class="club-section-title">Recent results</div>${completed.length ? completed.map(fixtureMini).join('') : '<p class="md-empty">No results yet.</p>'}</div></div><div class="club-availability"><div class="club-section-title">Injuries & suspensions</div>${renderAvailability(availability)}</div><div class="club-transfers"><div class="club-section-title">Confirmed transfers</div>${renderTransfers(transfers)}</div><div class="club-squad"><div class="club-section-title">2026/27 squad</div>${renderSquad(squad, club)}</div></div>`;
+  target.innerHTML = `<div class="club-card"><div class="club-head">${crestHtml(club, true)}<div><div class="club-title">${escapeHtml(club.name)}</div><div class="club-meta">${tableRow ? `${tableRow.rank}${ordinal(tableRow.rank)} · ${tableRow.points} points · ${tableRow.played} played` : `${matches.length} fixtures`}</div></div><button type="button" class="favorite-action${state.favoriteClub === key ? ' active' : ''}" data-favorite-club="${escapeHtml(key)}">${state.favoriteClub === key ? '★ Favourite club' : '☆ Set as favourite'}</button></div>${renderClubInfo(squad)}<div class="club-sections"><div><div class="club-section-title">Upcoming fixtures</div>${upcoming.length ? upcoming.map(fixtureMini).join('') : '<p class="md-empty">No upcoming fixtures available.</p>'}</div><div><div class="club-section-title">Recent results</div>${completed.length ? completed.map(fixtureMini).join('') : '<p class="md-empty">No results yet.</p>'}</div></div><div class="club-availability"><div class="club-section-title">Injuries & suspensions</div>${renderAvailability(availability)}</div><div class="club-squad"><div class="club-section-title">2026/27 squad</div>${renderSquad(squad, club)}<div class="squad-transfer-block"><h4>Confirmed transfers</h4>${renderTransfers(transfers)}</div></div></div>`;
   loadClubSquad(key, club);
   loadClubAvailability(key, club);
   loadClubTransfers(key, club);
@@ -948,6 +949,7 @@ function installEvents() {
   });
   $('#player-dialog-close').addEventListener('click', () => $('#player-dialog').close());
   $('#player-dialog').addEventListener('click', event => { if (event.target === $('#player-dialog')) $('#player-dialog').close(); });
+  $('#player-dialog').addEventListener('close', () => document.body.classList.remove('dialog-open'));
   $('#data-health-toggle').addEventListener('click', () => {
     const panel = $('#data-health-panel');
     const open = panel.hidden;
