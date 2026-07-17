@@ -87,7 +87,8 @@ function pulseFixture(fixture) {
     strProgress: fixture.clock && fixture.clock.label ? String(fixture.clock.label).replace(/'00$/, '').replace("'", '') : '',
     strVenue: fixture.ground && fixture.ground.name,
     strCity: fixture.ground && fixture.ground.city,
-    strReferee: fixture.matchOfficials && fixture.matchOfficials[0] && fixture.matchOfficials[0].name && fixture.matchOfficials[0].name.display
+    strReferee: fixture.matchOfficials && fixture.matchOfficials[0] && fixture.matchOfficials[0].name && fixture.matchOfficials[0].name.display,
+    strBroadcasters: []
   };
 }
 
@@ -109,6 +110,9 @@ function espnFixture(event) {
   const away = competitors.find(item => item.homeAway === 'away') || competitors[1] || {};
   const status = espnStatus(competition);
   const score = item => status === 'NS' ? null : (item.score == null ? null : String(item.score));
+  const ukBroadcasters = (competition.geoBroadcasts || [])
+    .filter(item => String(item.region || '').toLowerCase() === 'gb')
+    .map(item => item.media && item.media.shortName).filter(Boolean);
   return {
     idEvent: `espn:${event.id}`,
     providerFixtureId: `espn:${event.id}`,
@@ -128,7 +132,8 @@ function espnFixture(event) {
     strStatusLong: competition.status && competition.status.type && competition.status.type.description,
     strProgress: competition.status && competition.status.displayClock || '',
     strVenue: competition.venue && competition.venue.fullName,
-    strCity: competition.venue && competition.venue.address && competition.venue.address.city
+    strCity: competition.venue && competition.venue.address && competition.venue.address.city,
+    strBroadcasters: [...new Set(ukBroadcasters)]
   };
 }
 
@@ -146,7 +151,7 @@ async function pulseFixtures() {
 }
 
 async function espnFixtures() {
-  const data = await espn('/scoreboard?dates=20260801-20270531&limit=1000');
+  const data = await espn('/scoreboard?dates=20260801-20270531&limit=1000&region=gb&lang=en');
   return (data.events || []).map(espnFixture);
 }
 
@@ -178,6 +183,8 @@ async function fixtures() {
   const espnValid = validSeason(espnEvents);
 
   if (premierLeagueValid) {
+    const secondaryByPair = new Map(espnEvents.map(event => [fixturePairKey(event), event]));
+    premierLeagueEvents.forEach(event => { event.strBroadcasters = secondaryByPair.get(fixturePairKey(event))?.strBroadcasters || []; });
     return {
       events: premierLeagueEvents,
       provider: 'Premier League',
@@ -386,6 +393,61 @@ async function detail(rawId) {
   };
 }
 
+function selectedStats(stats) {
+  const values = new Map((stats || []).map(stat => [stat.name, stat.value]));
+  return {
+    appearances: Number(values.get('appearances') || 0),
+    starts: Number(values.get('game_started') || 0),
+    goals: Number(values.get('goals') || 0),
+    assists: Number(values.get('goal_assist') || 0),
+    yellowCards: Number(values.get('total_yel_card') || values.get('yellow_card') || 0),
+    redCards: Number(values.get('total_red_card') || values.get('red_card') || 0),
+    cleanSheets: Number(values.get('clean_sheet') || 0),
+    saves: Number(values.get('saves') || 0)
+  };
+}
+
+async function player(playerId) {
+  if (!playerId) throw new Error('Player ID is required');
+  const [profile, seasonStats, careerStats] = await Promise.all([
+    pulse(`/players/${encodeURIComponent(playerId)}`),
+    pulse(`/stats/player/${encodeURIComponent(playerId)}?comps=1&compSeasons=${SEASON_ID}`).catch(() => ({ stats: [] })),
+    pulse(`/stats/player/${encodeURIComponent(playerId)}?comp=1`).catch(() => ({ stats: [] }))
+  ]);
+  return {
+    provider: 'Premier League',
+    player: {
+      id: profile.id,
+      name: profile.name && profile.name.display || '',
+      club: profile.currentTeam && profile.currentTeam.name || '',
+      position: profile.info && profile.info.positionInfo || profile.latestPosition || '',
+      shirtNumber: profile.info && profile.info.shirtNum || '',
+      nationality: profile.nationalTeam && profile.nationalTeam.country || '',
+      age: profile.age || '',
+      birthDate: profile.birth && profile.birth.date && profile.birth.date.label || '',
+      birthPlace: profile.birth && profile.birth.place || '',
+      height: profile.height || '',
+      debut: profile.debut && profile.debut.label || ''
+    },
+    season: selectedStats(seasonStats.stats),
+    career: selectedStats(careerStats.stats)
+  };
+}
+
+async function injuries(team) {
+  const data = await espn('/injuries?region=gb&lang=en');
+  const wanted = fixtureTeamKey(team);
+  const items = (data.injuries || []).map(item => ({
+    id: item.id || item.athlete && item.athlete.id,
+    player: item.athlete && item.athlete.displayName || item.name || '',
+    team: item.team && item.team.displayName || item.team && item.team.name || '',
+    status: item.status || item.type && item.type.description || '',
+    detail: item.details && (item.details.detail || item.details.type) || item.description || '',
+    returnDate: item.details && item.details.returnDate || item.returnDate || ''
+  })).filter(item => item.player && (!wanted || fixtureTeamKey(item.team) === wanted));
+  return { provider: 'ESPN UK availability feed', injuries: items };
+}
+
 async function squad(teamId) {
   if (!teamId) return { players: [] };
   const query = `comp=${COMPETITION_ID}&compSeasons=${SEASON_ID}&teams=${encodeURIComponent(teamId)}&page=0&pageSize=100&altIds=true`;
@@ -475,6 +537,8 @@ export default async function handler(req, res) {
     else if (type === 'detail') body = await detail(req.query.id);
     else if (type === 'lineups') body = await lineups(req.query.ids);
     else if (type === 'squad') body = await squad(req.query.teamId);
+    else if (type === 'player') body = await player(req.query.playerId);
+    else if (type === 'injuries') body = await injuries(req.query.team);
     else body = await feed();
 
     const cache = type === 'fixtures'
@@ -485,9 +549,11 @@ export default async function handler(req, res) {
           ? 's-maxage=10, stale-while-revalidate=10'
           : type === 'lineups'
             ? 's-maxage=20, stale-while-revalidate=20'
-            : type === 'squad'
+            : type === 'squad' || type === 'player'
               ? 's-maxage=21600, stale-while-revalidate=86400'
-              : 's-maxage=15, stale-while-revalidate=15';
+              : type === 'injuries'
+                ? 's-maxage=900, stale-while-revalidate=3600'
+                : 's-maxage=15, stale-while-revalidate=15';
     res.setHeader('Cache-Control', cache);
     res.status(200).json(body);
   } catch (error) {

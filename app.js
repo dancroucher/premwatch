@@ -22,6 +22,9 @@ const state = {
   squadRequests: new Map(),
   transfers: new Map(),
   transferRequests: new Map(),
+  availability: new Map(),
+  availabilityRequests: new Map(),
+  playerProfiles: new Map(),
   news: [],
   newsKey: '',
   newsLoading: false,
@@ -159,7 +162,8 @@ function normaliseFixture(event, source) {
     progress: event.strProgress || '',
     venue: event.strVenue || event.strStadium || '',
     city: event.strCity || '',
-    referee: event.strReferee || ''
+    referee: event.strReferee || '',
+    broadcasters: Array.isArray(event.strBroadcasters) ? event.strBroadcasters : []
   };
 }
 
@@ -344,7 +348,8 @@ function renderFixture(fixture) {
     : statusLabel(fixture) ? `<span class="row-status">${escapeHtml(statusLabel(fixture))}</span>` : '';
   const competitionStatus = fixture.isEuropean ? `<span class="europe-pill" title="${escapeHtml(fixture.competition)}">${escapeHtml(fixture.competitionCode)}</span>` : '';
   const lineupStatus = hasLineups ? '<button type="button" class="lineup-pill">Line-ups</button>' : '';
-  const matchStatus = `${competitionStatus}${scoreStatus}${lineupStatus}${live || hasLineups ? '<span class="detail-caret">▾</span>' : ''}`;
+  const tvStatus = fixture.broadcasters.length ? `<span class="tv-pill" title="Confirmed UK broadcaster">TV: ${escapeHtml(fixture.broadcasters.join(', '))}</span>` : '';
+  const matchStatus = `${competitionStatus}${tvStatus}${scoreStatus}${lineupStatus}${live || hasLineups ? '<span class="detail-caret">▾</span>' : ''}`;
   return `<div class="${classes}" data-id="${escapeHtml(fixture.id)}">
     <div class="row-teams">
       <span class="row-team home">${clubLink(fixture.home)}${crestHtml(fixture.home)}</span>
@@ -367,8 +372,16 @@ function visibleFixtures() {
   });
 }
 
+function renderTvListings() {
+  const target = $('#tv-listings');
+  if (!target) return;
+  const fixtures = state.fixtures.filter(fixture => fixture.broadcasters?.length && fixtureTime(fixture) > Date.now()).sort((a, b) => fixtureTime(a) - fixtureTime(b));
+  target.innerHTML = fixtures.length ? `<div class="tv-listing-grid">${fixtures.map(fixture => { const parts = dateParts(fixture.kickoff); return `<div><strong>${escapeHtml(fixture.home.name)} v ${escapeHtml(fixture.away.name)}</strong><span>${escapeHtml(parts.date)} · ${escapeHtml(parts.time)} · ${escapeHtml(fixture.broadcasters.join(', '))}</span></div>`; }).join('')}</div><p class="source-note">Only UK listings explicitly returned by the fixture provider are shown.</p>` : '<p class="md-empty">No confirmed UK broadcaster details are currently available in the fixture feed.</p>';
+}
+
 function renderFixtures() {
   const list = $('#fixture-list');
+  renderTvListings();
   if (!state.fixtures.length) {
     list.innerHTML = `<div class="empty-state"><h2>Fixtures are not available yet</h2><p>The 2026/27 fixture list will appear here as soon as a configured provider publishes it. No placeholder or invented matches are shown.</p></div>`;
     $('#fixture-count').textContent = 'Awaiting release';
@@ -438,7 +451,7 @@ function renderTable() {
 function fixtureMini(fixture) {
   const parts = dateParts(fixture.kickoff);
   const score = hasScore(fixture) ? `${fixture.homeScore} – ${fixture.awayScore}` : 'v';
-  return `<div class="club-fixture${fixture.isEuropean ? ' european' : ''}${isFinal(fixture) ? ' finished' : ''}${isLive(fixture) ? ' live' : ''}"><div class="cf-meta"><span>${fixture.isEuropean ? `<strong>${escapeHtml(fixture.competitionCode)}</strong> · ` : ''}${escapeHtml(fixture.venue || '')}</span><span>${escapeHtml(isLive(fixture) || isFinal(fixture) ? statusLabel(fixture) : `${parts.date} · ${parts.time} ${parts.zone}`)}</span></div><div class="cf-teams">${escapeHtml(fixture.home.name)} <span class="vs${hasScore(fixture) ? ' score' : ''}">${score}</span> ${escapeHtml(fixture.away.name)}</div></div>`;
+  return `<div class="club-fixture${fixture.isEuropean ? ' european' : ''}${isFinal(fixture) ? ' finished' : ''}${isLive(fixture) ? ' live' : ''}"><div class="cf-meta"><span>${fixture.isEuropean ? `<strong>${escapeHtml(fixture.competitionCode)}</strong> · ` : ''}${escapeHtml(fixture.venue || '')}</span><span>${escapeHtml(isLive(fixture) || isFinal(fixture) ? statusLabel(fixture) : `${parts.date} · ${parts.time} ${parts.zone}`)}${fixture.broadcasters?.length ? ` · TV: ${escapeHtml(fixture.broadcasters.join(', '))}` : ''}</span></div><div class="cf-teams">${escapeHtml(fixture.home.name)} <span class="vs${hasScore(fixture) ? ' score' : ''}">${score}</span> ${escapeHtml(fixture.away.name)}</div></div>`;
 }
 
 const POSITION_GROUPS = [
@@ -467,7 +480,7 @@ function renderSquad(squad, club) {
   return `<div class="squad-groups">${POSITION_GROUPS.map(([code, label]) => {
     const players = squad.players.filter(player => player.position === code).sort((a, b) => (Number(a.shirtNumber) || 999) - (Number(b.shirtNumber) || 999) || a.name.localeCompare(b.name));
     if (!players.length) return '';
-    return `<section class="squad-group"><h4>${label}</h4><div class="squad-grid">${players.map(player => `<article class="squad-player"><span class="squad-shirt">${escapeHtml(player.shirtNumber || '–')}</span><strong>${escapeHtml(player.name)}</strong><span class="squad-role">${escapeHtml(player.positionInfo || label.slice(0, -1))}</span><span class="squad-nationality">${escapeHtml(player.nationality || '')}</span></article>`).join('')}</div></section>`;
+    return `<section class="squad-group"><h4>${label}</h4><div class="squad-grid">${players.map(player => `<button type="button" class="squad-player" data-player-id="${escapeHtml(player.id)}" data-player-club="${escapeHtml(club.name)}"><span class="squad-shirt">${escapeHtml(player.shirtNumber || '–')}</span><strong>${escapeHtml(player.name)}</strong><span class="squad-role">${escapeHtml(player.positionInfo || label.slice(0, -1))}</span><span class="squad-nationality">${escapeHtml(player.nationality || '')}</span></button>`).join('')}</div></section>`;
   }).join('')}</div>`;
 }
 
@@ -482,6 +495,51 @@ async function loadClubSquad(key, club) {
       if (hash && teamKey(decodeURIComponent(hash[1])) === key) renderClubPage(club.name);
     });
   state.squadRequests.set(key, request);
+}
+
+function renderAvailability(data) {
+  if (!data) return '<div class="loading-dots">Checking availability</div>';
+  if (!data.items.length) return `<p class="md-empty">No current injuries are listed by ${escapeHtml(data.provider)}. Suspensions are only shown when explicitly supplied by a provider.</p>`;
+  return `<div class="availability-list">${data.items.map(item => `<div class="availability-row"><strong>${escapeHtml(item.player)}</strong><span>${escapeHtml([item.status, item.detail].filter(Boolean).join(' · ') || 'Unavailable')}</span>${item.returnDate ? `<small>Possible return: ${escapeHtml(dateParts(item.returnDate).date)}</small>` : ''}</div>`).join('')}</div><p class="source-note">Source: ${escapeHtml(data.provider)}. Availability can change.</p>`;
+}
+
+async function loadClubAvailability(key, club) {
+  if (state.availability.has(key) || state.availabilityRequests.has(key)) return;
+  const request = fetchJSON(`/api/live?type=injuries&team=${encodeURIComponent(club.name)}`)
+    .then(data => state.availability.set(key, { items: data.injuries || [], provider: data.provider || 'availability feed' }))
+    .catch(() => state.availability.set(key, { items: [], provider: 'availability feed' }))
+    .finally(() => {
+      state.availabilityRequests.delete(key);
+      const hash = location.hash.match(/^#club=(.+)$/);
+      if (hash && teamKey(decodeURIComponent(hash[1])) === key) renderClubPage(club.name);
+    });
+  state.availabilityRequests.set(key, request);
+}
+
+function statCards(stats) {
+  return [['Apps', stats.appearances], ['Starts', stats.starts], ['Goals', stats.goals], ['Assists', stats.assists], ['Yellow cards', stats.yellowCards], ['Red cards', stats.redCards]].map(([label, value]) => `<div><strong>${Number(value) || 0}</strong><span>${label}</span></div>`).join('');
+}
+
+async function openPlayerProfile(id, clubName) {
+  const dialog = $('#player-dialog');
+  const target = $('#player-profile');
+  dialog.showModal();
+  target.innerHTML = '<div class="loading-dots">Loading player</div>';
+  try {
+    let data = state.playerProfiles.get(String(id));
+    if (!data) {
+      const [profile, news] = await Promise.all([fetchJSON(`/api/live?type=player&playerId=${encodeURIComponent(id)}`), fetchJSON(`/api/news?clubs=${encodeURIComponent(clubName)}`).catch(() => ({ articles: [] }))]);
+      const fullName = profile.player.name.toLowerCase();
+      const surname = fullName.split(' ').slice(-1)[0];
+      profile.news = (news.articles || []).filter(article => article.title.toLowerCase().includes(fullName) || article.title.toLowerCase().includes(surname)).slice(0, 6);
+      data = profile;
+      state.playerProfiles.set(String(id), data);
+    }
+    const player = data.player;
+    target.innerHTML = `<div class="player-profile-head"><span class="squad-shirt">${escapeHtml(player.shirtNumber || '–')}</span><div><h2>${escapeHtml(player.name)}</h2><p>${escapeHtml([player.club, player.position, player.nationality].filter(Boolean).join(' · '))}</p></div></div><div class="player-facts">${player.age ? `<span><strong>Age</strong>${escapeHtml(player.age)}</span>` : ''}${player.height ? `<span><strong>Height</strong>${escapeHtml(player.height)} cm</span>` : ''}${player.birthDate ? `<span><strong>Born</strong>${escapeHtml(player.birthDate)}</span>` : ''}${player.debut ? `<span><strong>PL debut</strong>${escapeHtml(player.debut)}</span>` : ''}</div><section class="player-stat-section"><h3>2026/27 Premier League</h3><div class="player-stats">${statCards(data.season)}</div></section><section class="player-stat-section"><h3>Premier League career</h3><div class="player-stats">${statCards(data.career)}</div></section><section class="player-stat-section"><h3>Recent headlines</h3>${data.news.length ? `<div class="player-news">${data.news.map(article => `<a href="${escapeHtml(article.link)}" target="_blank" rel="noopener noreferrer"><strong>${escapeHtml(article.title)}</strong><span>${escapeHtml(article.source)}</span></a>`).join('')}</div>` : '<p class="md-empty">No recent attributed headlines found.</p>'}</section><p class="source-note">Player information and statistics: ${escapeHtml(data.provider)}.</p>`;
+  } catch (_) {
+    target.innerHTML = '<div class="empty-state"><h2>Player unavailable</h2><p>The player feed could not be loaded.</p></div>';
+  }
 }
 
 function transferLabel(type) {
@@ -523,8 +581,10 @@ function renderClubPage(name) {
   const tableRow = (state.standings.length ? state.standings : calculateStandings()).find(row => teamKey(row.team) === key);
   const squad = state.squads.get(key);
   const transfers = state.transfers.get(key);
-  target.innerHTML = `<div class="club-card"><div class="club-head">${crestHtml(club, true)}<div><div class="club-title">${escapeHtml(club.name)}</div><div class="club-meta">${tableRow ? `${tableRow.rank}${ordinal(tableRow.rank)} · ${tableRow.points} points · ${tableRow.played} played` : `${matches.length} fixtures`}</div></div><button type="button" class="favorite-action${state.favoriteClub === key ? ' active' : ''}" data-favorite-club="${escapeHtml(key)}">${state.favoriteClub === key ? '★ Favourite club' : '☆ Set as favourite'}</button></div>${renderClubInfo(squad)}<div class="club-sections"><div><div class="club-section-title">Upcoming fixtures</div>${upcoming.length ? upcoming.map(fixtureMini).join('') : '<p class="md-empty">No upcoming fixtures available.</p>'}</div><div><div class="club-section-title">Recent results</div>${completed.length ? completed.map(fixtureMini).join('') : '<p class="md-empty">No results yet.</p>'}</div></div><div class="club-transfers"><div class="club-section-title">Confirmed transfers</div>${renderTransfers(transfers)}</div><div class="club-squad"><div class="club-section-title">2026/27 squad</div>${renderSquad(squad, club)}</div></div>`;
+  const availability = state.availability.get(key);
+  target.innerHTML = `<div class="club-card"><div class="club-head">${crestHtml(club, true)}<div><div class="club-title">${escapeHtml(club.name)}</div><div class="club-meta">${tableRow ? `${tableRow.rank}${ordinal(tableRow.rank)} · ${tableRow.points} points · ${tableRow.played} played` : `${matches.length} fixtures`}</div></div><button type="button" class="favorite-action${state.favoriteClub === key ? ' active' : ''}" data-favorite-club="${escapeHtml(key)}">${state.favoriteClub === key ? '★ Favourite club' : '☆ Set as favourite'}</button></div>${renderClubInfo(squad)}<div class="club-sections"><div><div class="club-section-title">Upcoming fixtures</div>${upcoming.length ? upcoming.map(fixtureMini).join('') : '<p class="md-empty">No upcoming fixtures available.</p>'}</div><div><div class="club-section-title">Recent results</div>${completed.length ? completed.map(fixtureMini).join('') : '<p class="md-empty">No results yet.</p>'}</div></div><div class="club-availability"><div class="club-section-title">Injuries & suspensions</div>${renderAvailability(availability)}</div><div class="club-transfers"><div class="club-section-title">Confirmed transfers</div>${renderTransfers(transfers)}</div><div class="club-squad"><div class="club-section-title">2026/27 squad</div>${renderSquad(squad, club)}</div></div>`;
   loadClubSquad(key, club);
+  loadClubAvailability(key, club);
   loadClubTransfers(key, club);
 }
 
@@ -879,6 +939,15 @@ function updateNewsClubPickerButton() {
 
 function installEvents() {
   $$('.tab-btn').forEach(button => button.addEventListener('click', () => switchTab(button.dataset.tab)));
+  $('#tv-listings-toggle').addEventListener('click', () => {
+    const panel = $('#tv-listings');
+    const open = panel.hidden;
+    panel.hidden = !open;
+    $('#tv-listings-toggle').setAttribute('aria-expanded', String(open));
+    renderTvListings();
+  });
+  $('#player-dialog-close').addEventListener('click', () => $('#player-dialog').close());
+  $('#player-dialog').addEventListener('click', event => { if (event.target === $('#player-dialog')) $('#player-dialog').close(); });
   $('#data-health-toggle').addEventListener('click', () => {
     const panel = $('#data-health-panel');
     const open = panel.hidden;
@@ -956,6 +1025,11 @@ function installEvents() {
   document.addEventListener('click', event => {
     if (!$('#team-picker').contains(event.target)) $('#team-picker').classList.remove('open');
     if (!$('#news-team-picker').contains(event.target)) $('#news-team-picker').classList.remove('open');
+    const player = event.target.closest('[data-player-id]');
+    if (player) {
+      openPlayerProfile(player.dataset.playerId, player.dataset.playerClub || '');
+      return;
+    }
     const favorite = event.target.closest('[data-favorite-club]');
     if (favorite) {
       const key = favorite.dataset.favoriteClub;
