@@ -40,7 +40,7 @@ button, input { font: inherit; }
 .header-inner { max-width: 1300px; margin: 0 auto; }
 .header-title { align-items: center; display: flex; gap: 14px; }
 .header-logo { flex: 0 0 auto; height: 58px; object-fit: contain; width: auto; }
-.site-header h1 { color: #fff; font-size: clamp(21px, 4vw, 30px); font-stretch: 118%; font-weight: 700; letter-spacing: -.4px; }
+.site-header h1 { color: #fff; font-size: clamp(21px, 4vw, 30px); font-weight: 700; letter-spacing: -.4px; }
 .site-header h1 strong { color: var(--header-soft); }
 .site-header p { align-items: center; color: var(--header-muted); display: flex; font-size: 13px; gap: 8px; margin-top: 6px; }
 .next-match { align-items: center; background: rgba(255,255,255,.03); border: 1px solid var(--header-border); border-radius: var(--r-md); color: #d7dbe0; display: inline-flex; flex-wrap: wrap; font-size: 13px; gap: 8px; margin-top: 10px; padding: 7px 11px; }
@@ -75,10 +75,10 @@ button, input { font: inherit; }
 main { margin: 0 auto; max-width: 1300px; padding: 24px 14px 60px; }
 .section { display: none; }
 .section.visible { display: block; }
-.round-label { align-items: center; border-bottom: 2px solid var(--ink); display: flex; flex-wrap: wrap; font-size: 20px; font-stretch: 118%; font-weight: 700; gap: 10px; margin: 4px 0 14px; padding-bottom: 8px; }
-.round-label .filter-toggle, .round-label .team-picker { font-stretch: 100%; }
+.round-label { align-items: center; border-bottom: 2px solid var(--ink); display: flex; flex-wrap: wrap; font-size: 20px; font-weight: 700; gap: 10px; margin: 4px 0 14px; padding-bottom: 8px; }
+.round-label .filter-toggle, .round-label .team-picker { }
 
-.pill, .live-pill, .europe-pill, .lineup-pill, .tv-pill, .transfer-type { border-radius: var(--r-full); font-size: 10px; font-stretch: 100%; font-weight: 700; letter-spacing: .3px; padding: 2px 9px; text-transform: uppercase; }
+.pill, .live-pill, .europe-pill, .lineup-pill, .tv-pill, .transfer-type { border-radius: var(--r-full); font-size: 10px; font-weight: 700; letter-spacing: .3px; padding: 2px 9px; text-transform: uppercase; }
 .pill { border: 1px solid var(--muted); color: var(--muted); font-weight: 600; margin-right: auto; }
 .live-pill { background: var(--live); color: #fff; }
 .europe-pill { background: var(--accent-soft); border: 1px solid var(--accent); color: var(--accent-ink); }
@@ -127,12 +127,12 @@ main { margin: 0 auto; max-width: 1300px; padding: 24px 14px 60px; }
 .club-name { color: var(--ink); font-size: 15px; font-weight: 700; overflow: hidden; text-decoration: none; text-overflow: ellipsis; white-space: nowrap; }
 .club-name:hover { text-decoration: underline; text-underline-offset: 2px; }
 .vs { color: var(--muted); font-size: 12px; min-width: 38px; text-align: center; }
-.vs.score { color: var(--ink); font-size: 18px; font-stretch: 112%; font-variant-numeric: tabular-nums; font-weight: 700; }
+.vs.score { color: var(--ink); font-size: 18px; font-variant-numeric: tabular-nums; font-weight: 700; }
 .vs.score.spoiler { background: #14161a; border-radius: var(--r-sm); color: transparent; cursor: pointer; padding: 2px 4px; user-select: none; }
 .row-when { line-height: 1.25; text-align: right; }
 .row-date { color: var(--muted); display: block; font-size: 12px; }
-.row-time { color: var(--ink); font-size: 18px; font-stretch: 112%; font-variant-numeric: tabular-nums; font-weight: 700; }
-.row-tz { color: var(--muted); font-size: 10px; font-stretch: 100%; font-weight: 400; margin-left: 3px; }
+.row-time { color: var(--ink); font-size: 18px; font-variant-numeric: tabular-nums; font-weight: 700; }
+.row-tz { color: var(--muted); font-size: 10px; font-weight: 400; margin-left: 3px; }
 .row-venue { font-size: 13px; overflow: hidden; text-align: right; text-overflow: ellipsis; white-space: nowrap; }
 .detail-caret { color: var(--muted); font-size: 11px; }
 
@@ -185,7 +185,7 @@ main { margin: 0 auto; max-width: 1300px; padding: 24px 14px 60px; }
 .legend-swatch.cl { background: var(--accent); }
 .legend-swatch.rel { background: var(--live); margin-left: 14px; }
 .empty-state { background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-md); padding: 32px 20px; text-align: center; }
-.empty-state h2 { font-size: 20px; font-stretch: 118%; margin-bottom: 8px; }
+.empty-state h2 { font-size: 20px; margin-bottom: 8px; }
 .empty-state p { color: var(--muted); line-height: 1.5; margin: 0 auto; max-width: 680px; }
 @keyframes spinner-turn { to { transform: rotate(360deg); } }
 .spinner, .loading-dots::before { animation: spinner-turn .75s linear infinite; border: 2px solid currentColor; border-right-color: transparent; border-radius: 50%; box-sizing: border-box; content: ''; display: inline-block; height: 14px; margin-right: 7px; vertical-align: -2px; width: 14px; }
@@ -204,7 +204,7 @@ main { margin: 0 auto; max-width: 1300px; padding: 24px 14px 60px; }
 .club-head > div { flex: 1; }
 .favorite-action { background: var(--faint); border: 1px solid var(--border); border-radius: var(--r-full); color: var(--muted); cursor: pointer; flex: 0 0 auto; font-size: 11px; padding: 6px 10px; transition: background .15s, border-color .15s, color .15s; }
 .favorite-action.active { background: #fff4bf; border-color: var(--gold); color: var(--gold-ink); }
-.club-title { font-size: 25px; font-stretch: 118%; font-weight: 700; }
+.club-title { font-size: 25px; font-weight: 700; }
 .club-meta { color: var(--muted); font-size: 13px; margin-top: 3px; }
 .club-info-grid { background: var(--faint); border: 1px solid var(--border); border-radius: var(--r-md); display: grid; gap: 18px; grid-template-columns: repeat(2, minmax(0, 1fr)); margin-bottom: 18px; padding: 12px; }
 .staff-list { display: flex; flex-direction: column; gap: 4px; }
@@ -253,7 +253,7 @@ body.dialog-open { overflow: hidden; }
 .dialog-close { background: transparent; border: 0; color: var(--muted); cursor: pointer; font-size: 26px; position: absolute; right: 10px; top: 6px; }
 .player-profile-head { align-items: center; display: flex; flex-direction: column; gap: 8px; justify-content: center; text-align: center; }
 .player-profile-head .squad-shirt { font-size: 18px; height: 42px; width: 42px; }
-.player-profile-head h2 { font-size: 22px; font-stretch: 118%; margin: 0; }
+.player-profile-head h2 { font-size: 22px; margin: 0; }
 .player-profile-head p { color: var(--muted); font-size: 11px; margin: 2px 0 0; }
 .player-facts { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin: 16px 0; }
 .player-facts span { background: var(--faint); border-radius: var(--r-sm); display: flex; flex-direction: column; font-size: 11px; min-width: 110px; padding: 7px; }
