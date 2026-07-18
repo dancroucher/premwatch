@@ -437,7 +437,7 @@ function renderTable() {
   wrap.innerHTML = `<div class="league-table-wrap"><table class="league-table">
     <thead><tr><th>Pos</th><th class="club-col">Club</th><th>P</th><th>W</th><th>D</th><th>L</th><th class="optional">GF</th><th class="optional">GA</th><th>GD</th><th>Pts</th><th class="optional">Form</th></tr></thead>
     <tbody>${rows.map((row, index) => `<tr><td>${row.rank || index + 1}</td><td class="club-col"><a class="table-club" href="${clubUrl(row.team)}" data-club="${escapeHtml(row.team)}">${row.crest ? `<img src="${escapeHtml(row.crest)}" data-fallback="/icon.svg" alt="">` : ''}<span>${escapeHtml(row.team)}</span></a></td><td>${row.played}</td><td>${row.won}</td><td>${row.drawn}</td><td>${row.lost}</td><td class="optional">${row.goalsFor}</td><td class="optional">${row.goalsAgainst}</td><td>${row.goalDifference > 0 ? '+' : ''}${row.goalDifference}</td><td><strong>${row.points}</strong></td><td class="form optional">${escapeHtml(row.form || '')}</td></tr>`).join('')}</tbody>
-  </table></div>`;
+  </table></div><p class="table-legend"><span class="legend-swatch cl"></span> Champions League<span class="legend-swatch rel"></span> Relegation</p>`;
 }
 
 function fixtureMini(fixture) {
