@@ -13,6 +13,13 @@ const POLL_MS = 30_000;
 const DETAIL_POLL_MS = 15_000;
 const DEMO_LIVE = new URLSearchParams(location.search).get('demo') === 'live';
 
+// FIFA men's international match calendar; Sep+Oct are one merged window from 2026
+const INTERNATIONAL_BREAKS = [
+  { start: Date.parse('2026-09-21T00:00:00Z'), end: Date.parse('2026-10-06T23:59:59Z'), dates: '21 Sep – 6 Oct' },
+  { start: Date.parse('2026-11-09T00:00:00Z'), end: Date.parse('2026-11-17T23:59:59Z'), dates: '9 – 17 Nov' },
+  { start: Date.parse('2027-03-22T00:00:00Z'), end: Date.parse('2027-03-30T23:59:59Z'), dates: '22 – 30 Mar' },
+];
+
 const state = {
   fixtures: [],
   standings: [],
@@ -383,8 +390,13 @@ function renderFixtures() {
 
   let html = '';
   let lastDay = '';
+  let prevKick = 0;
   const fixtures = visibleFixtures();
   for (const fixture of fixtures) {
+    const kick = new Date(fixture.kickoff).getTime();
+    const brk = INTERNATIONAL_BREAKS.find(b => prevKick && prevKick < b.start && kick > b.end);
+    if (brk) html += `<div class="break-divider">International break · ${brk.dates}</div>`;
+    prevKick = kick;
     const day = dateParts(fixture.kickoff).day;
     if (day !== lastDay) {
       html += `<div class="day-divider">${escapeHtml(day)}</div>`;
