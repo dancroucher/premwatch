@@ -500,19 +500,6 @@ const POSITION_GROUPS = [
   ['F', 'Forwards']
 ];
 
-function renderClubInfo(data) {
-  if (!data) return '';
-  const facts = [
-    data.club?.stadium ? ['Stadium', data.club.stadium] : null,
-    data.club?.capacity ? ['Capacity', Number(data.club.capacity).toLocaleString('en-GB')] : null,
-    data.club?.city ? ['City', data.club.city] : null,
-    data.club?.founded ? ['Founded', data.club.founded] : null
-  ].filter(Boolean);
-  const staff = data.staff || [];
-  if (!facts.length && !staff.length) return '';
-  return `<div class="club-info-grid">${staff.length ? `<section><div class="club-section-title">Manager & staff</div><div class="staff-list">${staff.map(person => `<div class="staff-row"><strong>${escapeHtml(person.name)}</strong><span>${escapeHtml(person.role)}${person.nationality ? ` · ${escapeHtml(person.nationality)}` : ''}</span></div>`).join('')}</div></section>` : ''}${facts.length ? `<section><div class="club-section-title">Club details</div><dl class="club-facts">${facts.map(([label, value]) => `<div><dt>${escapeHtml(label)}</dt><dd>${label === 'Stadium' ? mapLink(value, data.club?.city, 'club-stadium-link', '') : escapeHtml(value)}</dd></div>`).join('')}</dl></section>` : ''}</div>`;
-}
-
 function renderSquad(squad, club) {
   if (!squad) return '<div class="loading-dots">Loading squad</div>';
   if (!squad.players || !squad.players.length) return '<p class="md-empty">Squad data is currently unavailable.</p>';
@@ -623,7 +610,7 @@ function renderClubPage(name) {
   const squad = state.squads.get(key);
   const transfers = state.transfers.get(key);
   const availability = state.availability.get(key);
-  target.innerHTML = `<div class="club-card"><div class="club-head">${crestHtml(club, true)}<div><div class="club-title">${escapeHtml(club.name)}</div><div class="club-meta">${tableRow ? `${tableRow.rank}${ordinal(tableRow.rank)} · ${tableRow.points} points · ${tableRow.played} played` : `${matches.length} fixtures`}</div></div><button type="button" class="favorite-action${state.favoriteClub === key ? ' active' : ''}" data-favorite-club="${escapeHtml(key)}">${state.favoriteClub === key ? '★ Favourite club' : '☆ Set as favourite'}</button></div>${renderClubInfo(squad)}<div class="club-sections"><div><div class="club-section-title">Upcoming fixtures</div>${upcoming.length ? upcoming.map(fixtureMini).join('') : '<p class="md-empty">No upcoming fixtures available.</p>'}</div><div><div class="club-section-title">Recent results</div>${completed.length ? completed.map(fixtureMini).join('') : '<p class="md-empty">No results yet.</p>'}</div></div><div class="club-availability"><div class="club-section-title">Injuries & suspensions</div>${renderAvailability(availability)}</div><div class="club-squad"><div class="club-section-title">2026/27 squad</div>${renderSquad(squad, club)}<div class="squad-transfer-block"><h4>Confirmed transfers</h4>${renderTransfers(transfers)}</div></div></div>`;
+  target.innerHTML = `<div class="club-card"><div class="club-head">${crestHtml(club, true)}<div><div class="club-title">${escapeHtml(club.name)}</div><div class="club-meta">${tableRow ? `${tableRow.rank}${ordinal(tableRow.rank)} · ${tableRow.points} points · ${tableRow.played} played` : `${matches.length} fixtures`}</div></div><button type="button" class="favorite-action${state.favoriteClub === key ? ' active' : ''}" data-favorite-club="${escapeHtml(key)}">${state.favoriteClub === key ? '★ Favourite club' : '☆ Set as favourite'}</button></div><div class="club-sections"><div><div class="club-section-title">Upcoming fixtures</div>${upcoming.length ? upcoming.map(fixtureMini).join('') : '<p class="md-empty">No upcoming fixtures available.</p>'}</div><div><div class="club-section-title">Recent results</div>${completed.length ? completed.map(fixtureMini).join('') : '<p class="md-empty">No results yet.</p>'}</div></div><div class="club-availability"><div class="club-section-title">Injuries & suspensions</div>${renderAvailability(availability)}</div><div class="club-squad"><div class="club-section-title">2026/27 squad</div>${renderSquad(squad, club)}<div class="squad-transfer-block"><h4>Confirmed transfers</h4>${renderTransfers(transfers)}</div></div></div>`;
   loadClubSquad(key, club);
   loadClubAvailability(key, club);
   loadClubTransfers(key, club);

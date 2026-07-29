@@ -209,14 +209,6 @@ main { margin: 0 auto; max-width: 1300px; padding: 24px 14px 60px; }
 .favorite-action.active { background: #fff4bf; border-color: var(--gold); color: var(--gold-ink); }
 .club-title { font-size: 25px; font-weight: 700; }
 .club-meta { color: var(--muted); font-size: 13px; margin-top: 3px; }
-.club-info-grid { background: var(--faint); border: 1px solid var(--border); border-radius: var(--r-md); display: grid; gap: 18px; grid-template-columns: repeat(2, minmax(0, 1fr)); margin-bottom: 18px; padding: 12px; }
-.staff-list { display: flex; flex-direction: column; gap: 4px; }
-.staff-row { align-items: baseline; background: var(--surface); border-radius: var(--r-sm); display: flex; font-size: 12px; justify-content: space-between; padding: 6px 8px; }
-.staff-row span { color: var(--muted); font-size: 10px; text-align: right; }
-.club-facts { display: grid; gap: 4px; grid-template-columns: repeat(2, minmax(0, 1fr)); }
-.club-facts div { background: var(--surface); border-radius: var(--r-sm); padding: 6px 8px; }
-.club-facts dt { color: var(--muted); font-size: 10px; text-transform: uppercase; }
-.club-facts dd { font-size: 12px; font-weight: 600; margin-top: 2px; }
 .club-sections { display: grid; gap: 18px; grid-template-columns: repeat(2, minmax(0, 1fr)); }
 .club-section-title { color: var(--muted); font-size: 12px; font-weight: 700; letter-spacing: .4px; margin-bottom: 7px; text-transform: uppercase; }
 .club-fixture { border: 1px solid var(--border); border-left: 3px solid var(--ink); border-radius: var(--r-sm); font-size: 13px; margin-bottom: 6px; padding: 8px; }
@@ -299,7 +291,7 @@ footer a { color: var(--ink); }
   .row-venue { align-self: end; grid-area: venue; text-align: right; }
   .row-time { font-size: 16px; }
   .club-name { font-size: 14px; }
-  .health-grid, .club-info-grid, .club-sections, .lineups-grid { grid-template-columns: 1fr; }
+  .health-grid, .club-sections, .lineups-grid { grid-template-columns: 1fr; }
   .player-stats { grid-template-columns: repeat(3, 1fr); }
   .availability-row { grid-template-columns: 1fr; }
   .availability-row small { grid-column: 1; }
@@ -376,10 +368,10 @@ main { padding-top: 30px; }
 .row-time.provisional { color: var(--muted); font-size: 18px; }
 .row-time.provisional .row-tz { display: block; font-size: 8px; letter-spacing: .5px; margin: 1px 0 0; text-transform: uppercase; }
 .row-venue { align-items: center; background: var(--faint); border: 1px solid var(--border); color: var(--ink); display: inline-flex; font-size: 11px; gap: 6px; justify-content: flex-end; justify-self: end; line-height: 1.25; max-width: 180px; overflow: visible; padding: 6px 8px; text-align: right; text-decoration: none; text-overflow: clip; white-space: normal; }
-.row-venue:hover, .cf-venue:hover, .club-stadium-link:hover { border-color: var(--brand); color: var(--brand); }
-.row-venue .ui-icon, .cf-venue .ui-icon, .club-stadium-link .ui-icon { flex: 0 0 auto; height: 14px; width: 14px; }
+.row-venue:hover, .cf-venue:hover { border-color: var(--brand); color: var(--brand); }
+.row-venue .ui-icon, .cf-venue .ui-icon { flex: 0 0 auto; height: 14px; width: 14px; }
 .row-venue.unavailable { color: var(--muted); }
-.cf-venue, .club-stadium-link { align-items: center; color: inherit; display: inline-flex; gap: 3px; text-decoration: underline; text-decoration-color: var(--border); text-underline-offset: 2px; }
+.cf-venue { align-items: center; color: inherit; display: inline-flex; gap: 3px; text-decoration: underline; text-decoration-color: var(--border); text-underline-offset: 2px; }
 
 .news-card { border-left-width: 4px; border-radius: 0; margin-top: -1px; padding: 14px 16px; }
 .news-card:hover { background: #fff; box-shadow: none; border-left-color: var(--signal); }
@@ -389,7 +381,7 @@ main { padding-top: 30px; }
 .league-table tbody tr:hover { background: #fff; }
 .club-head { border-bottom: 4px solid var(--ink); padding-bottom: 14px; }
 .club-title { font-size: 31px; font-stretch: 75%; letter-spacing: -.7px; text-transform: uppercase; }
-.club-fixture, .staff-row, .club-facts div, .squad-player, .availability-row { border-radius: 0; }
+.club-fixture, .squad-player, .availability-row { border-radius: 0; }
 .squad-transfer-block { border-top: 4px solid var(--ink); }
 
 .quick-jump button { align-items: center; justify-content: center; }
