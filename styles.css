@@ -325,17 +325,17 @@ body {
 .icon-sprite { height: 0; overflow: hidden; position: absolute; width: 0; }
 .ui-icon { fill: none; height: 18px; stroke: currentColor; stroke-linecap: square; stroke-linejoin: miter; stroke-width: 1.75; width: 18px; }
 
-.site-header { background: var(--brand); border-top: 4px solid var(--signal); overflow: hidden; padding: 15px 20px 14px; position: relative; }
+.site-header { background: var(--brand); border-top: 4px solid var(--signal); overflow: hidden; padding: 21px 24px 20px; position: relative; }
 .site-header::after { border: 1px solid rgba(255,255,255,.05); border-width: 0 1px; content: ''; height: 200%; position: absolute; right: 24%; top: -50%; transform: rotate(18deg); width: 10%; }
 .header-inner { align-items: center; display: grid; gap: 8px 30px; grid-template-columns: minmax(0, 1fr) minmax(340px, auto); position: relative; z-index: 1; }
 .header-title { align-self: center; }
 .site-header h1 { font-size: clamp(27px, 3vw, 36px); font-stretch: 82%; letter-spacing: -1.1px; line-height: 1; text-transform: none; }
 .site-header h1 span { display: inline; font: inherit; letter-spacing: inherit; }
 .site-header p { border-left: 2px solid var(--signal); margin-top: 7px; padding-left: 8px; }
-.header-controls { align-items: flex-end; display: flex; flex-direction: column; justify-content: center; min-width: 0; }
+.header-title .next-match { background: transparent; border-radius: 0; border-width: 1px 0; margin-top: 9px; padding: 6px 0; }
+.header-controls { align-items: flex-end; align-self: start; display: flex; flex-direction: column; justify-content: center; min-width: 0; padding-top: 2px; }
 .header-controls .status-row { justify-content: flex-end; }
 .header-controls .feed-status, .header-controls .data-health-toggle { margin-top: 0; }
-.header-controls .next-match { background: transparent; border-width: 0; border-radius: 0; justify-content: flex-end; margin-top: 6px; padding: 0; text-align: right; }
 .feed-status, .data-health-toggle, .favorite-club-link { border-radius: 2px; }
 .data-health-panel { grid-column: 1 / -1; justify-self: end; width: min(900px, 100%); }
 
@@ -391,12 +391,11 @@ footer { background: var(--brand); border-top: 6px solid var(--signal); color: #
 footer a { color: #fff; }
 
 @media (max-width: 760px) {
-  .site-header { padding: 13px 14px; }
+  .site-header { padding: 18px 16px; }
   .header-inner { gap: 10px; grid-template-columns: 1fr; }
   .site-header h1 { font-size: 27px; }
   .header-controls { align-items: flex-start; border-top: 1px solid var(--header-border); padding-top: 8px; }
   .header-controls .status-row { justify-content: flex-start; }
-  .header-controls .next-match { justify-content: flex-start; text-align: left; }
   .nav-tabs { padding: 0 10px; }
   .tab-btn { flex: 1; justify-content: center; padding: 11px 8px 9px; }
   .round-label { font-size: 24px; }
