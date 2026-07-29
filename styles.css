@@ -1,17 +1,18 @@
 @import url('https://fonts.googleapis.com/css2?family=Archivo:ital,wdth,wght@0,62..125,100..900&display=swap');
 
 :root {
-  --bg: #f3f0e8;
-  --surface: #fffdf8;
-  --faint: #eae6dc;
-  --border: #cfc9bc;
-  --ink: #152128;
-  --muted: #626b6d;
-  --accent: #078264;
+  --bg: #f4f6ed;
+  --surface: #fffef8;
+  --faint: #e9eddf;
+  --border: #cbd2bc;
+  --ink: #182554;
+  --muted: #657078;
+  --brand: #2847d8;
+  --accent: #087b68;
   --accent-soft: #dcefe8;
-  --accent-ink: #08634f;
-  --signal: #ff5a36;
-  --signal-soft: #fff0e9;
+  --accent-ink: #075f50;
+  --signal: #cbe83d;
+  --signal-soft: #f4facd;
   --live: #d9472d;
   --live-ink: #a83020;
   --danger-soft: #fff0ec;
@@ -41,9 +42,8 @@ button, input { font: inherit; }
 .site-header { background: var(--ink); padding: 22px 20px 20px; }
 .header-inner { max-width: 1300px; margin: 0 auto; }
 .header-title { align-items: center; display: flex; gap: 14px; }
-.header-logo { flex: 0 0 auto; height: 58px; object-fit: contain; width: auto; }
 .site-header h1 { color: #fff; font-size: clamp(21px, 4vw, 30px); font-weight: 700; letter-spacing: -.4px; }
-.site-header h1 strong { color: var(--header-soft); }
+.site-header h1 span { color: inherit; }
 .site-header p { align-items: center; color: var(--header-muted); display: flex; font-size: 13px; gap: 8px; margin-top: 6px; }
 .next-match { align-items: center; background: rgba(255,255,255,.03); border: 1px solid var(--header-border); border-radius: var(--r-md); color: #d7dbe0; display: inline-flex; flex-wrap: wrap; font-size: 13px; gap: 8px; margin-top: 10px; padding: 7px 11px; }
 .next-match strong { color: #fff; }
@@ -320,22 +320,20 @@ footer a { color: var(--ink); }
   .squad-role { max-width: 110px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 }
 
-/* Matchday bulletin identity */
+/* Findus fixture-book identity */
 body {
   background-color: var(--bg);
-  background-image: repeating-linear-gradient(90deg, transparent 0, transparent 79px, rgba(21,33,40,.025) 80px);
+  background-image: repeating-linear-gradient(90deg, transparent 0, transparent 79px, rgba(24,37,84,.025) 80px);
 }
 .icon-sprite { height: 0; overflow: hidden; position: absolute; width: 0; }
 .ui-icon { fill: none; height: 18px; stroke: currentColor; stroke-linecap: square; stroke-linejoin: miter; stroke-width: 1.75; width: 18px; }
 
-.site-header { border-top: 6px solid var(--signal); overflow: hidden; padding: 26px 20px 24px; position: relative; }
+.site-header { background: var(--brand); border-top: 6px solid var(--signal); overflow: hidden; padding: 26px 20px 24px; position: relative; }
 .site-header::after { border: 1px solid rgba(255,255,255,.06); border-width: 0 1px; content: ''; height: 180%; position: absolute; right: 21%; top: -40%; transform: rotate(18deg); width: 12%; }
 .header-inner { display: grid; gap: 12px 30px; grid-template-columns: minmax(0, 1fr) auto; position: relative; z-index: 1; }
 .header-title { align-self: center; }
-.header-logo { height: 76px; width: 76px; }
-.header-kicker { color: var(--signal); display: block; font-size: 10px; font-weight: 800; letter-spacing: 1.7px; margin-bottom: 4px; text-transform: uppercase; }
-.site-header h1 { font-size: clamp(27px, 4vw, 43px); font-stretch: 78%; letter-spacing: -1.3px; line-height: .95; text-transform: uppercase; }
-.site-header h1 strong { color: #fff; display: block; font-size: .53em; font-stretch: 105%; letter-spacing: 2.5px; line-height: 1.5; }
+.site-header h1 { font-size: clamp(29px, 4vw, 43px); font-stretch: 82%; letter-spacing: -1.3px; line-height: 1; text-transform: none; }
+.site-header h1 span { display: block; font: inherit; letter-spacing: inherit; }
 .site-header p { border-left: 2px solid var(--signal); padding-left: 8px; }
 .season-stamp { align-self: center; color: #fff; font-size: clamp(42px, 7vw, 82px); font-stretch: 70%; font-variant-numeric: tabular-nums; font-weight: 850; letter-spacing: -5px; line-height: .8; text-align: right; }
 .season-stamp span { color: var(--header-muted); display: block; font-size: 9px; font-stretch: 100%; letter-spacing: 2px; margin: 0 4px 8px 0; text-transform: uppercase; }
@@ -381,13 +379,12 @@ main { padding-top: 30px; }
 .squad-transfer-block { border-top: 4px solid var(--ink); }
 
 .quick-jump button { align-items: center; justify-content: center; }
-footer { background: var(--ink); border-top: 6px solid var(--signal); color: var(--header-muted); }
+footer { background: var(--brand); border-top: 6px solid var(--signal); color: #d7dcff; }
 footer a { color: #fff; }
 
 @media (max-width: 760px) {
   .site-header { padding: 18px 14px; }
   .header-inner { gap: 14px; grid-template-columns: 1fr auto; }
-  .header-logo { height: 58px; width: 58px; }
   .site-header h1 { font-size: 27px; }
   .season-stamp { font-size: 38px; letter-spacing: -3px; }
   .season-stamp span { margin-bottom: 5px; }
@@ -405,7 +402,5 @@ footer a { color: #fff; }
 
 @media (max-width: 440px) {
   .tab-btn .ui-icon { height: 16px; width: 16px; }
-  .header-kicker { letter-spacing: 1.2px; }
-  .site-header h1 strong { letter-spacing: 1.5px; }
   .season-stamp { font-size: 32px; }
 }
