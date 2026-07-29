@@ -3,27 +3,39 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#1c1f23">
+  <meta name="theme-color" content="#152128">
   <meta name="apple-mobile-web-app-title" content="Findus PL 2026/27">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="mobile-web-app-capable" content="yes">
   <title>Findus Premier League 2026/27 — Fixtures and live scores</title>
-  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="icon" type="image/svg+xml" href="/findus-mark.svg">
   <link rel="manifest" href="/site.webmanifest">
   <link rel="stylesheet" href="/styles.css">
 </head>
 <body>
+  <svg class="icon-sprite" aria-hidden="true">
+    <symbol id="icon-fixtures" viewBox="0 0 24 24"><path d="M5 4.5h14v15H5zM8 2.5v4M16 2.5v4M5 9h14M8 12.5h3M8 16h6"/></symbol>
+    <symbol id="icon-table" viewBox="0 0 24 24"><path d="M5 4h14v16H5zM5 9h14M5 14h14M10 4v16M15 4v16"/></symbol>
+    <symbol id="icon-news" viewBox="0 0 24 24"><path d="M4 5h13v14H4zM17 8h3v11h-3M7 9h7M7 12h7M7 15h4"/></symbol>
+    <symbol id="icon-next" viewBox="0 0 24 24"><path d="M5 12h13M14 7l5 5-5 5"/></symbol>
+    <symbol id="icon-today" viewBox="0 0 24 24"><path d="M5 5h14v14H5zM8 3v4M16 3v4M5 9h14M9 13h6"/></symbol>
+    <symbol id="icon-filter" viewBox="0 0 24 24"><path d="M4 6h16M7 12h10M10 18h4"/></symbol>
+  </svg>
   <header class="site-header">
     <div class="header-inner">
       <div class="header-title">
-        <img class="header-logo" src="/premier-league-5.png" alt="Premier League">
+        <img class="header-logo" src="/findus-mark.svg" alt="">
         <div>
-          <h1>Findus Premier League <strong>2026/27</strong></h1>
+          <span class="header-kicker">The matchday bulletin</span>
+          <h1>Findus <strong>Premier League</strong></h1>
           <p><span id="season-summary"><span class="spinner" aria-hidden="true"></span> Loading the official fixture list…</span><button type="button" id="favorite-club-link" class="favorite-club-link" hidden></button></p>
         </div>
       </div>
-      <div id="next-match" class="next-match">Finding the next match…</div>
-      <div class="status-row"><div id="feed-status" class="feed-status loading" role="status"><span class="spinner" aria-hidden="true"></span> Connecting to live scores…</div><button type="button" id="data-health-toggle" class="data-health-toggle" aria-expanded="false">Data health</button></div>
+      <div class="season-stamp" aria-hidden="true"><span>Season</span>26/27</div>
+      <div class="header-feed">
+        <div id="next-match" class="next-match">Finding the next match…</div>
+        <div class="status-row"><div id="feed-status" class="feed-status loading" role="status"><span class="spinner" aria-hidden="true"></span> Connecting to live scores…</div><button type="button" id="data-health-toggle" class="data-health-toggle" aria-expanded="false">Data health</button></div>
+      </div>
       <div id="data-health-panel" class="data-health-panel" hidden></div>
     </div>
   </header>
@@ -31,9 +43,9 @@
   <div class="nav-wrap">
     <div class="nav-inner">
       <nav class="nav-tabs" aria-label="Primary navigation">
-        <button class="tab-btn active" data-tab="fixtures">Fixtures</button>
-        <button class="tab-btn" data-tab="table">Table</button>
-        <button class="tab-btn" data-tab="news">News</button>
+        <button class="tab-btn active" data-tab="fixtures"><svg class="ui-icon" aria-hidden="true"><use href="#icon-fixtures"></use></svg>Fixtures</button>
+        <button class="tab-btn" data-tab="table"><svg class="ui-icon" aria-hidden="true"><use href="#icon-table"></use></svg>Table</button>
+        <button class="tab-btn" data-tab="news"><svg class="ui-icon" aria-hidden="true"><use href="#icon-news"></use></svg>News</button>
       </nav>
     </div>
   </div>
@@ -88,9 +100,9 @@
   </dialog>
 
   <div class="quick-jump" aria-label="Quick navigation">
-    <button type="button" id="jump-next">Next match</button>
-    <button type="button" id="jump-today">Today</button>
-    <button type="button" id="jump-filters">Filters</button>
+    <button type="button" id="jump-next"><svg class="ui-icon" aria-hidden="true"><use href="#icon-next"></use></svg>Next match</button>
+    <button type="button" id="jump-today"><svg class="ui-icon" aria-hidden="true"><use href="#icon-today"></use></svg>Today</button>
+    <button type="button" id="jump-filters"><svg class="ui-icon" aria-hidden="true"><use href="#icon-filter"></use></svg>Filters</button>
   </div>
 
   <footer>
