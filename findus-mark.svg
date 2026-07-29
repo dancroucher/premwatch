@@ -1,8 +1,8 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 180 180" role="img" aria-label="Findus fixtures icon">
-  <rect width="180" height="180" rx="28" fill="#2847d8"/>
-  <path d="M22 24h136v132H22z" fill="none" stroke="#fffef8" stroke-width="5"/>
-  <path d="M90 24v132M22 90h136" fill="none" stroke="#fffef8" stroke-width="3" opacity=".34"/>
-  <circle cx="90" cy="90" r="22" fill="none" stroke="#fffef8" stroke-width="3" opacity=".34"/>
-  <path d="M48 126V49h58M48 82h48" fill="none" stroke="#cbe83d" stroke-linecap="square" stroke-width="15"/>
-  <circle cx="130" cy="126" r="10" fill="#fffef8"/>
+  <rect width="180" height="180" rx="28" fill="#24292b"/>
+  <path d="M22 24h136v132H22z" fill="none" stroke="#fff" stroke-width="5"/>
+  <path d="M90 24v132M22 90h136" fill="none" stroke="#fff" stroke-width="3" opacity=".34"/>
+  <circle cx="90" cy="90" r="22" fill="none" stroke="#fff" stroke-width="3" opacity=".34"/>
+  <path d="M48 126V49h58M48 82h48" fill="none" stroke="#66ddc5" stroke-linecap="square" stroke-width="15"/>
+  <circle cx="130" cy="126" r="10" fill="#fff"/>
 </svg>
