@@ -133,7 +133,6 @@ main { margin: 0 auto; max-width: 1300px; padding: 24px 14px 60px; }
 .vs.score { color: var(--ink); font-size: 18px; font-variant-numeric: tabular-nums; font-weight: 700; }
 .vs.score.spoiler { background: #14161a; border-radius: var(--r-sm); color: transparent; cursor: pointer; padding: 2px 4px; user-select: none; }
 .row-when { line-height: 1.25; text-align: right; }
-.row-date { color: var(--muted); display: block; font-size: 12px; }
 .row-time { color: var(--ink); font-size: 18px; font-variant-numeric: tabular-nums; font-weight: 700; }
 .row-tz { color: var(--muted); font-size: 10px; font-weight: 400; margin-left: 3px; }
 .row-venue { font-size: 13px; overflow: hidden; text-align: right; text-overflow: ellipsis; white-space: nowrap; }
@@ -283,7 +282,6 @@ footer a { color: var(--ink); }
 @media (max-width: 760px) {
   .site-header { padding: 14px; }
   .header-title { gap: 10px; }
-  .header-logo { height: 48px; }
   .site-header h1 { font-size: 22px; }
   .next-match { display: flex; width: 100%; }
   .nav-tabs { padding: 7px 10px; }
@@ -298,7 +296,6 @@ footer a { color: var(--ink); }
   .row-when { grid-area: when; text-align: left; }
   .row-match-status { justify-content: flex-start; }
   .row-venue { align-self: end; grid-area: venue; text-align: right; }
-  .row-date { font-size: 11px; }
   .row-time { font-size: 16px; }
   .club-name { font-size: 14px; }
   .health-grid, .club-info-grid, .club-sections, .lineups-grid { grid-template-columns: 1fr; }
@@ -357,8 +354,12 @@ main { padding-top: 30px; }
 .team-picker-btn, .team-picker-actions button { border-radius: 2px; }
 
 .match-list, .news-grid { gap: 0; }
-.day-divider { align-items: center; background: var(--ink); border: 0; color: var(--surface); display: flex; font-size: 12px; letter-spacing: 1.1px; margin: 22px 0 0; min-height: 34px; padding: 8px 12px; }
-.day-divider::before { background: var(--signal); content: ''; height: 8px; margin-right: 10px; transform: rotate(45deg); width: 8px; }
+.day-divider { align-items: baseline; background: var(--brand); border: 0; color: #fff; display: flex; gap: 9px; letter-spacing: 0; margin: 24px 0 0; min-height: 48px; padding: 8px 14px; }
+.day-divider::before { display: none; }
+.day-weekday { color: var(--signal); font-size: 13px; font-weight: 800; letter-spacing: .8px; margin-right: 4px; text-transform: uppercase; }
+.day-number { font-size: 27px; font-stretch: 75%; font-weight: 850; line-height: 1; }
+.day-month { font-size: 17px; font-stretch: 85%; font-weight: 750; }
+.day-year { color: #d7dcff; font-size: 12px; font-weight: 600; margin-left: auto; }
 .break-divider { border-radius: 0; margin-bottom: 0; }
 .match-row { border-color: var(--border); border-left-width: 4px; border-radius: 0; margin-top: -1px; min-height: 66px; padding-bottom: 11px; padding-top: 11px; transition: background .12s, border-color .12s; }
 .match-row:hover { background: #fff; box-shadow: none; position: relative; z-index: 1; }
@@ -366,6 +367,13 @@ main { padding-top: 30px; }
 .club-name { text-decoration-thickness: 1px; }
 .vs.score, .row-time { font-stretch: 75%; font-weight: 850; letter-spacing: -.5px; }
 .row-time { font-size: 21px; }
+.row-time.provisional { color: var(--muted); font-size: 18px; }
+.row-time.provisional .row-tz { display: block; font-size: 8px; letter-spacing: .5px; margin: 1px 0 0; text-transform: uppercase; }
+.row-venue { align-items: center; background: var(--faint); border: 1px solid var(--border); color: var(--ink); display: inline-flex; font-size: 11px; gap: 6px; justify-self: end; line-height: 1.25; max-width: 180px; overflow: visible; padding: 6px 8px; text-align: left; text-decoration: none; text-overflow: clip; white-space: normal; }
+.row-venue:hover, .cf-venue:hover, .club-stadium-link:hover { border-color: var(--brand); color: var(--brand); }
+.row-venue .ui-icon, .cf-venue .ui-icon, .club-stadium-link .ui-icon { flex: 0 0 auto; height: 14px; width: 14px; }
+.row-venue.unavailable { color: var(--muted); }
+.cf-venue, .club-stadium-link { align-items: center; color: inherit; display: inline-flex; gap: 3px; text-decoration: underline; text-decoration-color: var(--border); text-underline-offset: 2px; }
 
 .news-card { border-left-width: 4px; border-radius: 0; margin-top: -1px; padding: 14px 16px; }
 .news-card:hover { background: #fff; box-shadow: none; border-left-color: var(--signal); }
@@ -393,8 +401,12 @@ footer a { color: #fff; }
   .tab-btn { flex: 1; justify-content: center; padding: 11px 8px 9px; }
   .round-label { font-size: 24px; }
   .filter-toggle { border-radius: 2px; }
-  .day-divider { margin-top: 16px; }
+  .day-divider { margin-top: 18px; padding: 8px 10px; }
+  .day-weekday { font-size: 11px; }
+  .day-number { font-size: 24px; }
+  .day-month { font-size: 15px; }
   .match-row { padding: 11px 10px; }
+  .row-venue { max-width: 100%; }
   .quick-jump { gap: 2px; }
   .quick-jump button { border: 0; border-radius: 0; box-shadow: none; display: flex; font-size: 11px; gap: 5px; text-transform: uppercase; }
   footer { padding-bottom: 76px; }

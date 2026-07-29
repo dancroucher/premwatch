@@ -101,6 +101,15 @@ function dateParts(iso) {
   return { day, date: shortDate, time, zone: zoneName };
 }
 
+function dateHeading(iso) {
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) return '<span class="day-weekday">Date TBC</span>';
+  const values = Object.fromEntries(new Intl.DateTimeFormat('en-GB', {
+    timeZone: effectiveTimeZone(), weekday: 'long', day: 'numeric', month: 'long', year: 'numeric'
+  }).formatToParts(date).map(part => [part.type, part.value]));
+  return `<span class="day-weekday">${escapeHtml(values.weekday)}</span><span class="day-number">${escapeHtml(values.day)}</span><span class="day-month">${escapeHtml(values.month)}</span><span class="day-year">${escapeHtml(values.year)}</span>`;
+}
+
 function teamKey(value) {
   return String(value || '')
     .normalize('NFKD')
@@ -187,10 +196,24 @@ function isCompleteFixtureList(fixtures) {
   return ids.size === COMPETITION.expectedFixtures && fixtures.every(fixture => fixture.home.name !== 'TBC' && fixture.away.name !== 'TBC' && fixture.kickoff);
 }
 
+function markProvisionalKickoffs(fixtures) {
+  const rounds = new Map();
+  fixtures.forEach(fixture => {
+    if (!fixture.matchweek) return;
+    if (!rounds.has(fixture.matchweek)) rounds.set(fixture.matchweek, []);
+    rounds.get(fixture.matchweek).push(fixture);
+  });
+  rounds.forEach((round, matchweek) => {
+    const onePlaceholderSlot = round.length === 10 && new Set(round.map(fixture => fixture.kickoff)).size === 1;
+    if (onePlaceholderSlot && matchweek < 38) round.forEach(fixture => { fixture.provisionalKickoff = true; });
+  });
+  return fixtures;
+}
+
 async function loadOfficialFixtures() {
   const data = await fetchJSON('/api/live?type=fixtures');
   state.health.league = { provider: data.provider || 'Football feed', validation: data.validation || null, updatedAt: new Date().toISOString(), ok: true };
-  const fixtures = (data.events || []).map(event => normaliseFixture(event, data.provider || 'football-feed'));
+  const fixtures = markProvisionalKickoffs((data.events || []).map(event => normaliseFixture(event, data.provider || 'football-feed')));
   if (isCompleteFixtureList(fixtures)) return { fixtures, source: data.provider || 'Premier League feed' };
   throw new Error(`Fixture provider returned ${fixtures.length} of ${COMPETITION.expectedFixtures} fixtures`);
 }
@@ -339,6 +362,13 @@ function clubLink(club) {
   return `<a class="club-name" href="${clubUrl(club.name)}" data-club="${escapeHtml(club.name)}">${escapeHtml(club.name)}</a>`;
 }
 
+function mapLink(name, location = '', className = 'venue-link', fallback = 'Venue TBC') {
+  if (!name) return fallback ? `<span class="${escapeHtml(className)} unavailable">${escapeHtml(fallback)}</span>` : '';
+  const query = [name, location].filter(Boolean).join(', ');
+  const url = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}`;
+  return `<a class="${escapeHtml(className)}" href="${escapeHtml(url)}" target="_blank" rel="noopener noreferrer" title="Open ${escapeHtml(name)} in Google Maps"><svg class="ui-icon" aria-hidden="true"><use href="#icon-location"></use></svg><span>${escapeHtml(name)}</span></a>`;
+}
+
 function renderFixture(fixture) {
   const parts = dateParts(fixture.kickoff);
   const live = isLive(fixture);
@@ -349,7 +379,6 @@ function renderFixture(fixture) {
   const hasLineups = !!(lineup && lineup.confirmed);
   const favorite = state.favoriteClub && [fixture.home.name, fixture.away.name].some(name => teamKey(name) === state.favoriteClub);
   const classes = ['match-row', favorite ? 'favorite' : '', fixture.isEuropean ? 'european' : '', final ? 'finished' : '', live ? 'is-live' : '', hasLineups ? 'has-lineups' : '', isPostponed(fixture) ? 'postponed' : ''].filter(Boolean).join(' ');
-  const venue = [fixture.venue, fixture.city].filter(Boolean).join(', ') || 'Venue TBC';
   const scoreStatus = live
     ? `<span class="live-pill">${escapeHtml(statusLabel(fixture))}</span>`
     : statusLabel(fixture) ? `<span class="row-status">${escapeHtml(statusLabel(fixture))}</span>` : '';
@@ -357,14 +386,17 @@ function renderFixture(fixture) {
   const lineupStatus = hasLineups ? '<button type="button" class="lineup-pill">Line-ups</button>' : '';
   const tvStatus = fixture.broadcasters.length ? `<span class="tv-pill" title="Confirmed UK broadcaster">TV: ${escapeHtml(fixture.broadcasters.join(', '))}</span>` : '';
   const matchStatus = `${competitionStatus}${tvStatus}${scoreStatus}${lineupStatus}${live || hasLineups ? '<span class="detail-caret">▾</span>' : ''}`;
+  const kickoff = fixture.provisionalKickoff
+    ? '<span class="row-time provisional" title="Kick-off time pending broadcast selections">TBC<span class="row-tz">Provisional</span></span>'
+    : `<span class="row-time">${escapeHtml(parts.time)}<span class="row-tz">${escapeHtml(parts.zone)}</span></span>`;
   return `<div class="${classes}" data-id="${escapeHtml(fixture.id)}">
     <div class="row-teams">
       <span class="row-team home">${clubLink(fixture.home)}${crestHtml(fixture.home)}</span>
       <span class="vs${hasScore(fixture) ? ' score' : ''}${hiddenScore ? ' spoiler' : ''}" title="${hiddenScore ? 'Reveal score' : ''}">${score}</span>
       <span class="row-team away">${crestHtml(fixture.away)}${clubLink(fixture.away)}</span>
     </div>
-    <div class="row-when"><span class="row-match-status">${matchStatus}</span><span class="row-date">${escapeHtml(parts.date)}</span><span class="row-time">${escapeHtml(parts.time)}<span class="row-tz">${escapeHtml(parts.zone)}</span></span></div>
-    <div class="row-venue" title="${escapeHtml(venue)}">${escapeHtml(venue)}</div>
+    <div class="row-when"><span class="row-match-status">${matchStatus}</span>${kickoff}</div>
+    ${mapLink(fixture.venue, fixture.city, 'row-venue')}
   </div>`;
 }
 
@@ -399,7 +431,7 @@ function renderFixtures() {
     prevKick = kick;
     const day = dateParts(fixture.kickoff).day;
     if (day !== lastDay) {
-      html += `<div class="day-divider">${escapeHtml(day)}</div>`;
+      html += `<div class="day-divider" data-day="${escapeHtml(day)}">${dateHeading(fixture.kickoff)}</div>`;
       lastDay = day;
     }
     html += renderFixture(fixture);
@@ -455,7 +487,10 @@ function renderTable() {
 function fixtureMini(fixture) {
   const parts = dateParts(fixture.kickoff);
   const score = hasScore(fixture) ? `${fixture.homeScore} – ${fixture.awayScore}` : 'v';
-  return `<div class="club-fixture${fixture.isEuropean ? ' european' : ''}${isFinal(fixture) ? ' finished' : ''}${isLive(fixture) ? ' live' : ''}"><div class="cf-meta"><span>${fixture.isEuropean ? `<strong>${escapeHtml(fixture.competitionCode)}</strong> · ` : ''}${escapeHtml(fixture.venue || '')}</span><span>${escapeHtml(isLive(fixture) || isFinal(fixture) ? statusLabel(fixture) : `${parts.date} · ${parts.time} ${parts.zone}`)}${fixture.broadcasters?.length ? ` · TV: ${escapeHtml(fixture.broadcasters.join(', '))}` : ''}</span></div><div class="cf-teams">${escapeHtml(fixture.home.name)} <span class="vs${hasScore(fixture) ? ' score' : ''}">${score}</span> ${escapeHtml(fixture.away.name)}</div></div>`;
+  const timing = isLive(fixture) || isFinal(fixture)
+    ? statusLabel(fixture)
+    : fixture.provisionalKickoff ? `${parts.date} · Time TBC` : `${parts.date} · ${parts.time} ${parts.zone}`;
+  return `<div class="club-fixture${fixture.isEuropean ? ' european' : ''}${isFinal(fixture) ? ' finished' : ''}${isLive(fixture) ? ' live' : ''}"><div class="cf-meta"><span>${fixture.isEuropean ? `<strong>${escapeHtml(fixture.competitionCode)}</strong> · ` : ''}${mapLink(fixture.venue, fixture.city, 'cf-venue')}</span><span>${escapeHtml(timing)}${fixture.broadcasters?.length ? ` · TV: ${escapeHtml(fixture.broadcasters.join(', '))}` : ''}</span></div><div class="cf-teams">${escapeHtml(fixture.home.name)} <span class="vs${hasScore(fixture) ? ' score' : ''}">${score}</span> ${escapeHtml(fixture.away.name)}</div></div>`;
 }
 
 const POSITION_GROUPS = [
@@ -475,7 +510,7 @@ function renderClubInfo(data) {
   ].filter(Boolean);
   const staff = data.staff || [];
   if (!facts.length && !staff.length) return '';
-  return `<div class="club-info-grid">${staff.length ? `<section><div class="club-section-title">Manager & staff</div><div class="staff-list">${staff.map(person => `<div class="staff-row"><strong>${escapeHtml(person.name)}</strong><span>${escapeHtml(person.role)}${person.nationality ? ` · ${escapeHtml(person.nationality)}` : ''}</span></div>`).join('')}</div></section>` : ''}${facts.length ? `<section><div class="club-section-title">Club details</div><dl class="club-facts">${facts.map(([label, value]) => `<div><dt>${escapeHtml(label)}</dt><dd>${escapeHtml(value)}</dd></div>`).join('')}</dl></section>` : ''}</div>`;
+  return `<div class="club-info-grid">${staff.length ? `<section><div class="club-section-title">Manager & staff</div><div class="staff-list">${staff.map(person => `<div class="staff-row"><strong>${escapeHtml(person.name)}</strong><span>${escapeHtml(person.role)}${person.nationality ? ` · ${escapeHtml(person.nationality)}` : ''}</span></div>`).join('')}</div></section>` : ''}${facts.length ? `<section><div class="club-section-title">Club details</div><dl class="club-facts">${facts.map(([label, value]) => `<div><dt>${escapeHtml(label)}</dt><dd>${label === 'Stadium' ? mapLink(value, data.club?.city, 'club-stadium-link', '') : escapeHtml(value)}</dd></div>`).join('')}</dl></section>` : ''}</div>`;
 }
 
 function renderSquad(squad, club) {
@@ -1081,7 +1116,7 @@ function installEvents() {
   });
   $('#jump-today').addEventListener('click', () => {
     const today = new Intl.DateTimeFormat('en-GB', { timeZone: effectiveTimeZone(), weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }).format(new Date());
-    $$('.day-divider').find(divider => divider.textContent === today)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    $$('.day-divider').find(divider => divider.dataset.day === today)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   });
   $('#jump-filters').addEventListener('click', () => $('#tab-fixtures .round-label').scrollIntoView({ behavior: 'smooth', block: 'start' }));
 }
