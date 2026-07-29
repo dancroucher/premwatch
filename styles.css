@@ -352,15 +352,17 @@ main { padding-top: 30px; }
 .round-label { border-bottom: 4px solid var(--ink); font-size: clamp(23px, 3vw, 31px); font-stretch: 75%; letter-spacing: -.7px; text-transform: uppercase; }
 .round-label .pill { font-stretch: 100%; }
 .round-label .filter-toggle, .round-label .team-picker { font-stretch: 100%; text-transform: none; }
+.round-label .team-picker { align-items: center; display: inline-flex; height: 30px; }
+.round-label .team-picker-btn { align-items: center; display: inline-flex; height: 30px; line-height: 1; padding-bottom: 0; padding-top: 0; }
 .team-picker-btn, .team-picker-actions button { border-radius: 2px; }
 
 .match-list, .news-grid { gap: 0; }
-.day-divider { align-items: baseline; background: var(--date-header); border: 0; color: #fff; display: flex; gap: 9px; letter-spacing: 0; margin: 24px 0 0; min-height: 48px; padding: 8px 14px; }
+.day-divider { align-items: center; background: var(--date-header); border: 0; color: #fff; display: flex; gap: 5px; letter-spacing: 0; margin: 24px 0 0; min-height: 44px; padding: 8px 14px; }
 .day-divider::before { display: none; }
-.day-weekday { color: var(--signal); font-size: 13px; font-weight: 800; letter-spacing: .8px; margin-right: 4px; text-transform: uppercase; }
-.day-number { font-size: 27px; font-stretch: 75%; font-weight: 850; line-height: 1; }
+.day-weekday { color: var(--signal); font-size: 13px; font-weight: 800; letter-spacing: .8px; margin-right: 0; text-transform: uppercase; }
+.day-number { font-size: 20px; font-stretch: 80%; font-weight: 850; line-height: 1; }
 .day-month { font-size: 17px; font-stretch: 85%; font-weight: 750; }
-.day-year { color: #c8d0cd; font-size: 12px; font-weight: 600; margin-left: auto; }
+.day-year { color: #c8d0cd; font-size: 12px; font-weight: 600; margin-left: 2px; }
 .break-divider { border-radius: 0; margin-bottom: 0; }
 .match-row { border-color: var(--border); border-left-width: 4px; border-radius: 0; margin-top: -1px; min-height: 66px; padding-bottom: 11px; padding-top: 11px; transition: background .12s, border-color .12s; }
 .match-row:hover { background: #fff; box-shadow: none; position: relative; z-index: 1; }
@@ -406,8 +408,9 @@ footer a { color: #fff; }
   .filter-toggle { border-radius: 2px; }
   .day-divider { margin-top: 18px; padding: 8px 10px; }
   .day-weekday { font-size: 11px; }
-  .day-number { font-size: 24px; }
+  .day-number { font-size: 19px; }
   .day-month { font-size: 15px; }
+  .day-year { font-size: 11px; }
   .match-row { padding: 11px 10px; }
   .row-venue { max-width: 100%; }
   .quick-jump { gap: 2px; }
