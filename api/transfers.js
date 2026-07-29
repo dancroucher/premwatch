@@ -11,7 +11,8 @@ const CLUB_IDS = {
 
 function key(value) {
   return String(value || '').normalize('NFKD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/afc/g, '').replace(/[^a-z0-9]/g, '')
-    .replace(/^manutd$/, 'manchesterunited').replace(/^mancity$/, 'manchestercity').replace(/^spurs$/, 'tottenhamhotspur');
+    .replace(/^manutd$/, 'manchesterunited').replace(/^mancity$/, 'manchestercity').replace(/^spurs$/, 'tottenhamhotspur')
+    .replace(/^ipswich$/, 'ipswichtown').replace(/^newcastle$/, 'newcastleunited');
 }
 
 async function playlist(id) {
