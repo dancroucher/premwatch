@@ -402,9 +402,10 @@ footer a { color: #fff; }
   .day-weekday { font-size: 11px; }
   .day-number { font-size: 19px; }
   .day-month { font-size: 15px; }
-  .day-year { font-size: 11px; }
-  .match-row { padding: 11px 10px; }
-  .row-venue { max-width: 100%; }
+  .day-year { display: none; }
+  .match-row { grid-template-areas: 'teams when' 'venue venue'; grid-template-columns: minmax(0, 1fr) auto; padding: 11px 10px; }
+  .row-when { align-items: flex-end; grid-area: when; text-align: right; }
+  .row-venue { grid-area: venue; justify-content: center; justify-self: center; max-width: 100%; text-align: center; }
   .quick-jump { gap: 2px; }
   .quick-jump button { border: 0; border-radius: 0; box-shadow: none; display: flex; font-size: 11px; gap: 5px; text-transform: uppercase; }
   footer { padding-bottom: 76px; }
