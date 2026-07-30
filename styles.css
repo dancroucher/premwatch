@@ -130,6 +130,7 @@ main { margin: 0 auto; max-width: 1300px; padding: 24px 14px 60px; }
 .club-name { color: var(--ink); font-size: 15px; font-weight: 700; overflow: hidden; text-decoration: none; text-overflow: ellipsis; white-space: nowrap; }
 .club-name:hover { text-decoration: underline; text-underline-offset: 2px; }
 .vs { color: var(--muted); font-size: 12px; min-width: 38px; text-align: center; }
+.mobile-versus { display: none; }
 .vs.score { color: var(--ink); font-size: 18px; font-variant-numeric: tabular-nums; font-weight: 700; }
 .vs.score.spoiler { background: #14161a; border-radius: var(--r-sm); color: transparent; cursor: pointer; padding: 2px 4px; user-select: none; }
 .row-when { line-height: 1.25; text-align: right; }
@@ -396,9 +397,11 @@ footer a { color: #fff; }
   .day-number { font-size: 19px; }
   .day-month { font-size: 15px; }
   .day-year { display: none; }
-  .match-row { grid-template-areas: 'teams when' 'venue venue'; grid-template-columns: minmax(0, 1fr) auto; padding: 11px 10px; }
-  .row-when { align-items: flex-end; grid-area: when; text-align: right; }
-  .row-venue { grid-area: venue; justify-content: center; justify-self: center; max-width: 100%; text-align: center; }
+  .match-row { display: block; min-height: 60px; padding: 14px 10px; }
+  .row-teams { align-items: center; width: 100%; }
+  .row-when, .row-venue { display: none; }
+  .desktop-versus { display: none; }
+  .mobile-versus { color: var(--ink); display: inline; font-size: 15px; font-variant-numeric: tabular-nums; font-weight: 850; }
 }
 
 @media (max-width: 440px) {

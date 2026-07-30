@@ -374,6 +374,7 @@ function renderFixture(fixture) {
   const live = isLive(fixture);
   const final = isFinal(fixture);
   const score = hasScore(fixture) ? `${fixture.homeScore} – ${fixture.awayScore}` : 'v';
+  const mobileCenter = hasScore(fixture) ? score : fixture.provisionalKickoff ? 'TBC' : parts.time;
   const hiddenScore = final && hasScore(fixture) && !state.revealed.has(fixture.id);
   const lineup = state.lineups.get(fixture.id);
   const hasLineups = !!(lineup && lineup.confirmed);
@@ -392,7 +393,7 @@ function renderFixture(fixture) {
   return `<div class="${classes}" data-id="${escapeHtml(fixture.id)}">
     <div class="row-teams">
       <span class="row-team home">${clubLink(fixture.home)}${crestHtml(fixture.home)}</span>
-      <span class="vs${hasScore(fixture) ? ' score' : ''}${hiddenScore ? ' spoiler' : ''}" title="${hiddenScore ? 'Reveal score' : ''}">${score}</span>
+      <span class="vs${hasScore(fixture) ? ' score' : ''}${hiddenScore ? ' spoiler' : ''}" title="${hiddenScore ? 'Reveal score' : ''}"><span class="desktop-versus">${score}</span><span class="mobile-versus">${escapeHtml(mobileCenter)}</span></span>
       <span class="row-team away">${crestHtml(fixture.away)}${clubLink(fixture.away)}</span>
     </div>
     <div class="row-when"><span class="row-match-status">${matchStatus}</span>${kickoff}</div>
