@@ -17,9 +17,6 @@
     <symbol id="icon-fixtures" viewBox="0 0 24 24"><path d="M5 4.5h14v15H5zM8 2.5v4M16 2.5v4M5 9h14M8 12.5h3M8 16h6"/></symbol>
     <symbol id="icon-table" viewBox="0 0 24 24"><path d="M5 4h14v16H5zM5 9h14M5 14h14M10 4v16M15 4v16"/></symbol>
     <symbol id="icon-news" viewBox="0 0 24 24"><path d="M4 5h13v14H4zM17 8h3v11h-3M7 9h7M7 12h7M7 15h4"/></symbol>
-    <symbol id="icon-next" viewBox="0 0 24 24"><path d="M5 12h13M14 7l5 5-5 5"/></symbol>
-    <symbol id="icon-today" viewBox="0 0 24 24"><path d="M5 5h14v14H5zM8 3v4M16 3v4M5 9h14M9 13h6"/></symbol>
-    <symbol id="icon-filter" viewBox="0 0 24 24"><path d="M4 6h16M7 12h10M10 18h4"/></symbol>
     <symbol id="icon-location" viewBox="0 0 24 24"><path d="M12 21s6-5.4 6-11a6 6 0 1 0-12 0c0 5.6 6 11 6 11z"/><circle cx="12" cy="10" r="2"/></symbol>
   </svg>
   <header class="site-header">
@@ -27,7 +24,6 @@
       <div class="header-title">
         <div>
           <h1>Findus <span>Premier League</span></h1>
-          <p><span id="season-summary"><span class="spinner" aria-hidden="true"></span> Loading the official fixture list…</span><button type="button" id="favorite-club-link" class="favorite-club-link" hidden></button></p>
           <div id="next-match" class="next-match">Finding the next match…</div>
         </div>
       </div>
@@ -96,12 +92,6 @@
     <button type="button" class="dialog-close" id="player-dialog-close" aria-label="Close">×</button>
     <div id="player-profile"><div class="loading-dots">Loading player</div></div>
   </dialog>
-
-  <div class="quick-jump" aria-label="Quick navigation">
-    <button type="button" id="jump-next"><svg class="ui-icon" aria-hidden="true"><use href="#icon-next"></use></svg>Next match</button>
-    <button type="button" id="jump-today"><svg class="ui-icon" aria-hidden="true"><use href="#icon-today"></use></svg>Today</button>
-    <button type="button" id="jump-filters"><svg class="ui-icon" aria-hidden="true"><use href="#icon-filter"></use></svg>Filters</button>
-  </div>
 
   <footer>
     Fixtures and live scores are refreshed from football data providers. Postponements and broadcast selections can change kick-off times.

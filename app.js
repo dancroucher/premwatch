@@ -681,12 +681,6 @@ function updateEuropeFilter() {
 }
 
 function updateSummary() {
-  const clubs = state.clubs.size;
-  const leagueCount = state.fixtures.filter(fixture => !fixture.isEuropean).length;
-  const europeCount = state.fixtures.filter(fixture => fixture.isEuropean).length;
-  $('#season-summary').textContent = leagueCount
-    ? `${leagueCount} league fixtures${europeCount ? ` · ${europeCount} European fixtures` : ''}${clubs ? ` · ${clubs} clubs` : ''}`
-    : 'Official fixtures have not been published by the configured feeds';
   updateEuropeFilter();
 }
 
@@ -1097,15 +1091,6 @@ function installEvents() {
     if ($('#player-dialog').open && !event.state?.playerDialog) $('#player-dialog').close();
     openHashClub();
   });
-  $('#jump-next').addEventListener('click', () => {
-    const fixture = state.fixtures.find(isLive) || state.fixtures.find(item => !isFinal(item) && !isPostponed(item) && fixtureTime(item) > Date.now());
-    if (fixture) $(`.match-row[data-id="${CSS.escape(fixture.id)}"]`)?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-  });
-  $('#jump-today').addEventListener('click', () => {
-    const today = new Intl.DateTimeFormat('en-GB', { timeZone: effectiveTimeZone(), weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }).format(new Date());
-    $$('.day-divider').find(divider => divider.dataset.day === today)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-  });
-  $('#jump-filters').addEventListener('click', () => $('#tab-fixtures .round-label').scrollIntoView({ behavior: 'smooth', block: 'start' }));
 }
 
 async function initialise() {
