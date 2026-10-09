@@ -48,9 +48,9 @@
   --r-md: 0;
   --r-full: 0;
 
-  --font: 'Archivo', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  --display: 100%;         /* reference face is a wide black grotesque, not condensed */
-  --display-track: -.015em;
+  --font: 'Poppins', 'Century Gothic', 'Avant Garde', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --display: 100%;         /* geometric round display face — no width axis */
+  --display-track: -.006em;
 }
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -558,7 +558,7 @@ main { margin: 0 auto; max-width: 1340px; padding: 48px 20px 96px; }
 .match-row.european .row-teams { box-shadow: inset 7px 0 0 var(--blue); }
 .match-row.european.favorite .row-teams { box-shadow: inset 7px 0 0 var(--blue), inset 14px 0 0 var(--yellow); }
 .match-row.finished { --strip: var(--ink-soft); background: var(--paper-deep); }
-.match-row.finished .club-name { color: var(--muted); }
+.match-row.finished .club-name { color: var(--ink-soft); }
 .match-row.finished .vs { background: var(--ink-soft); border-color: var(--ink-soft); color: var(--paper); }
 .match-row.finished:hover { background: var(--surface); }
 .match-row.postponed .row-status { color: var(--pink); }
@@ -969,7 +969,7 @@ footer a:hover { color: var(--yellow); }
   .next-match::before { display: none; }
   .nm-count { margin-left: 0; }
   .nav-tabs { padding: 0 10px; }
-  .tab-btn { flex: 1; justify-content: center; padding: 14px 8px 12px; letter-spacing: .1em; }
+  .tab-btn { flex: 1; justify-content: center; padding: 14px 6px 12px; font-size: 11px; letter-spacing: .06em; gap: 6px; }
   main { padding: 30px 12px 72px; }
   .round-label { font-size: 29px; gap: 10px 12px; margin-bottom: 22px; }
   .filter-toggle { font-size: 10px; padding: 7px 10px; }
