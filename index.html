@@ -3,11 +3,15 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#24292b">
+  <meta name="theme-color" content="#f1ebd9">
   <meta name="apple-mobile-web-app-title" content="Findus PL 2026/27">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="mobile-web-app-capable" content="yes">
+  <meta name="description" content="Premier League 2026/27 fixtures, live scores, table and news — refreshed continuously.">
   <title>Findus Premier League 2026/27 — Fixtures and live scores</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Archivo:ital,wdth,wght@0,62..125,100..900&display=swap" rel="stylesheet">
   <link rel="icon" type="image/svg+xml" href="/findus-mark.svg">
   <link rel="manifest" href="/site.webmanifest">
   <link rel="stylesheet" href="/styles.css">
@@ -22,14 +26,17 @@
   <header class="site-header">
     <div class="header-inner">
       <div class="header-title">
+        <span class="brand-mark" aria-hidden="true"><img src="/findus-mark.svg" alt=""></span>
         <div>
-          <h1>Findus <span>Premier League</span></h1>
-          <div id="next-match" class="next-match">Finding the next match…</div>
+          <h1><span class="brand-main">Findus</span><span class="brand-alt">Premier League</span></h1>
+          <p class="brand-meta">2026/27 · fixtures, table &amp; live scores</p>
         </div>
       </div>
+      <img class="hero-burst" src="/burst.svg" alt="" aria-hidden="true">
       <div class="header-controls">
         <div class="status-row"><div id="feed-status" class="feed-status loading" role="status"><span class="spinner" aria-hidden="true"></span> Connecting to live scores…</div><button type="button" id="data-health-toggle" class="data-health-toggle" aria-expanded="false">Data health</button></div>
       </div>
+      <div id="next-match" class="next-match">Finding the next match…</div>
       <div id="data-health-panel" class="data-health-panel" hidden></div>
     </div>
   </header>
@@ -94,8 +101,20 @@
   </dialog>
 
   <footer>
-    Fixtures and live scores are refreshed from football data providers. Postponements and broadcast selections can change kick-off times.
-    Verify important details with the <a href="https://www.premierleague.com/fixtures" target="_blank" rel="noopener">official Premier League fixture list</a>.
+    <div class="footer-inner">
+      <div class="footer-brand">
+        <img class="footer-mark" src="/findus-mark.svg" alt="" aria-hidden="true">
+        <div>
+          <strong>Findus</strong>
+          <span>Premier League 2026/27</span>
+        </div>
+      </div>
+      <p class="footer-note">Fixtures and live scores are refreshed from football data providers. Postponements and broadcast selections can change kick-off times — verify important details with the <a href="https://www.premierleague.com/fixtures" target="_blank" rel="noopener">official Premier League fixture list</a>.</p>
+      <div class="footer-meta">
+        <span>Fixtures · Table · News</span>
+        <span>Times shown in UK time</span>
+      </div>
+    </div>
   </footer>
 
   <script src="/app.js" defer></script>

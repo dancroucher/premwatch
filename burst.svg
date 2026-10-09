@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" role="presentation" aria-hidden="true">
+  <g>
+    <path d="M198.0 100.0 L100.0 111.0 L100.0 89.0 Z" fill="#ee7c9c"/>
+    <path d="M164.7 126.8 L95.8 110.2 L104.2 89.8 Z" fill="#f5c33b"/>
+    <path d="M162.2 162.2 L92.2 107.8 L107.8 92.2 Z" fill="#12924b"/>
+    <path d="M123.7 157.3 L89.8 104.2 L110.2 95.8 Z" fill="#3b9bd8"/>
+    <path d="M100.0 198.0 L89.0 100.0 L111.0 100.0 Z" fill="#e4532b"/>
+    <path d="M73.2 164.7 L89.8 95.8 L110.2 104.2 Z" fill="#ee7c9c"/>
+    <path d="M37.8 162.2 L92.2 92.2 L107.8 107.8 Z" fill="#f5c33b"/>
+    <path d="M42.7 123.7 L95.8 89.8 L104.2 110.2 Z" fill="#12924b"/>
+    <path d="M2.0 100.0 L100.0 89.0 L100.0 111.0 Z" fill="#3b9bd8"/>
+    <path d="M35.3 73.2 L104.2 89.8 L95.8 110.2 Z" fill="#e4532b"/>
+    <path d="M37.8 37.8 L107.8 92.2 L92.2 107.8 Z" fill="#ee7c9c"/>
+    <path d="M76.3 42.7 L110.2 95.8 L89.8 104.2 Z" fill="#f5c33b"/>
+    <path d="M100.0 2.0 L111.0 100.0 L89.0 100.0 Z" fill="#12924b"/>
+    <path d="M126.8 35.3 L110.2 104.2 L89.8 95.8 Z" fill="#3b9bd8"/>
+    <path d="M162.2 37.8 L107.8 107.8 L92.2 92.2 Z" fill="#e4532b"/>
+    <path d="M157.3 76.3 L104.2 110.2 L95.8 89.8 Z" fill="#ee7c9c"/>
+  </g>
+</svg>

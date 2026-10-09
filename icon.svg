@@ -1,8 +1,17 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 180 180" role="img" aria-label="Football fixtures icon">
-  <rect width="180" height="180" rx="40" fill="#1c1f23"/>
-  <path d="M0 129c36-18 68-18 102 0s55 17 78 3v48H0z" fill="#047d68"/>
-  <path d="M0 120c36-18 68-18 102 0s55 17 78 3" fill="none" stroke="#4ed4b6" stroke-width="5"/>
-  <circle cx="90" cy="77" r="43" fill="#fff"/>
-  <path d="M90 45l18 13-7 22H79l-7-22zm-35 27 17-14 7 22-14 17-18-7zm70 0-17-14-7 22 14 17 18-7zm-55 39 9-31h22l9 31-20 12z" fill="#1c1f23"/>
-  <text x="90" y="157" text-anchor="middle" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif" font-size="22" font-weight="800" fill="#fff">26/27</text>
+  <rect width="180" height="180" fill="#f1ebd9"/>
+  <g>
+    <path d="M172.0 90.0 L90.0 103.0 L90.0 77.0 Z" fill="#e4532b"/>
+    <path d="M141.8 127.6 L82.4 100.5 L97.6 79.5 Z" fill="#ee7c9c"/>
+    <path d="M115.3 168.0 L77.6 94.0 L102.4 86.0 Z" fill="#f5c33b"/>
+    <path d="M70.2 150.9 L77.6 86.0 L102.4 94.0 Z" fill="#12924b"/>
+    <path d="M23.7 138.2 L82.4 79.5 L97.6 100.5 Z" fill="#3b9bd8"/>
+    <path d="M26.0 90.0 L90.0 77.0 L90.0 103.0 Z" fill="#e4532b"/>
+    <path d="M23.7 41.8 L97.6 79.5 L82.4 100.5 Z" fill="#ee7c9c"/>
+    <path d="M70.2 29.1 L102.4 86.0 L77.6 94.0 Z" fill="#f5c33b"/>
+    <path d="M115.3 12.0 L102.4 94.0 L77.6 86.0 Z" fill="#12924b"/>
+    <path d="M141.8 52.4 L97.6 100.5 L82.4 79.5 Z" fill="#3b9bd8"/>
+  </g>
+  <circle cx="90" cy="90" r="40" fill="#f1ebd9" stroke="#141110" stroke-width="5"/>
+  <path d="M90.0,62.0 L96.8,80.7 L116.6,81.3 L100.9,93.6 L106.5,112.7 L90.0,101.5 L73.5,112.7 L79.1,93.6 L63.4,81.3 L83.2,80.7 Z" fill="#141110"/>
 </svg>

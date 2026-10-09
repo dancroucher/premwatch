@@ -3,8 +3,8 @@
   "short_name": "Findus PL",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#f1f3f2",
-  "theme_color": "#24292b",
+  "background_color": "#f1ebd9",
+  "theme_color": "#f1ebd9",
   "icons": [
     {
       "src": "/findus-mark.svg",
