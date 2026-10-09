@@ -533,7 +533,7 @@ main { margin: 0 auto; max-width: 1340px; padding: 48px 20px 96px; }
 }
 .vs.score { font-size: 30px; font-stretch: var(--display); font-variant-numeric: tabular-nums; letter-spacing: 0; }
 .vs.spoiler { cursor: pointer; user-select: none; }
-.vs.spoiler .desktop-versus, .vs.spoiler .mobile-versus { visibility: hidden; }
+.vs.spoiler .desktop-versus, .vs.spoiler .mobile-versus { display: none; }
 .vs.spoiler::after { content: '?'; color: var(--paper); font-size: 22px; inset: 0; position: absolute; display: grid; place-items: center; }
 .mobile-versus { display: none; }
 .detail-caret { color: var(--paper); font-size: 10px; }
@@ -952,8 +952,10 @@ footer a:hover { color: var(--yellow); }
 
 @media (max-width: 980px) {
   .squad-player { grid-template-columns: 36px minmax(0, 1fr) minmax(130px, 190px) 100px; }
-  /* names wrap rather than truncate once the row gets tight */
-  .club-name { line-height: 1.06; overflow: visible; overflow-wrap: anywhere; text-overflow: clip; white-space: normal; }
+  /* names wrap rather than truncate once the row gets tight (break-word, not
+     anywhere: 'anywhere' changes min-content sizing and makes flex shrink
+     mid-word) */
+  .club-name { line-height: 1.06; overflow: visible; overflow-wrap: break-word; text-overflow: clip; white-space: normal; }
 }
 
 @media (max-width: 760px) {
@@ -983,11 +985,11 @@ footer a:hover { color: var(--yellow); }
   .row-when { min-height: 50px; padding: 11px 16px; }
   .row-time { font-size: 22px; }
   .row-venue { border-left: 0; border-top: 2px solid rgba(241, 235, 217, .22); justify-content: flex-start; max-width: none; padding: 11px 16px; text-align: left; }
-  .row-teams { gap: 8px; min-height: 84px; padding: 16px 10px; }
-  .row-team { gap: 8px; }
-  .club-name { font-size: clamp(12.5px, 3.8vw, 17px); line-height: 1.06; }
-  .club-crest { height: 24px; width: 24px; }
-  .vs { min-width: 38px; min-height: 32px; padding: 2px 6px; }
+  .row-teams { gap: 6px; min-height: 84px; padding: 16px 8px; }
+  .row-team { gap: 6px; }
+  .club-name { font-size: clamp(12px, 3.4vw, 16px); line-height: 1.08; }
+  .club-crest { height: 22px; width: 22px; }
+  .vs { min-width: 44px; min-height: 32px; padding: 2px 5px; }
   .vs.score { font-size: 20px; }
   .mobile-versus { display: none; }
   .health-grid, .club-sections, .lineups-grid { grid-template-columns: 1fr; }
@@ -1007,9 +1009,10 @@ footer a:hover { color: var(--yellow); }
 @media (max-width: 440px) {
   .site-header h1 { font-size: 29px; }
   .hero-burst { display: none; }
-  .club-crest { height: 26px; width: 26px; }
-  .club-name { font-size: 15px; }
-  .row-teams { gap: 9px; }
+  .club-crest { height: 20px; width: 20px; }
+  /* heaviest names still have to fit beside two crests and the badge */
+  .club-name { font-size: 12px; }
+  .row-teams { gap: 5px; padding: 14px 6px; }
   .league-table .optional { display: none; }
   .squad-role { max-width: 110px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .tab-btn .ui-icon { height: 16px; width: 16px; }
